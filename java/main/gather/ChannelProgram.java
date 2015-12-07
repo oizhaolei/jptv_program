@@ -43,6 +43,7 @@ public class ChannelProgram {
 	String contents = " ";
 	String program_time = " ";
 
+	//同一个节目单，对应多个节目（SD／HD）
 	public static List<ChannelProgram> onSetChannelname(String text) {
 		List<ChannelProgram> clones = new ArrayList<ChannelProgram>();
 		for (int i = 0; i < channelMatrix.length; i++) {

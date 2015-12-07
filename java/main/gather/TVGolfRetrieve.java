@@ -2,7 +2,6 @@ package gather;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -33,9 +32,7 @@ public class TVGolfRetrieve {
 	static PreparedStatement prevProgramPS;
 	static PreparedStatement insertPS;
 	static PreparedStatement deletePS;
-	static int i = 0;
-	static String str[][];
-	public static String date;
+	public static String today;
 
 	/**
 	 * @param args
@@ -45,11 +42,7 @@ public class TVGolfRetrieve {
 	public static void main(String[] args) throws Exception {
 		try {
 			DBclass.print("now: %s", DateFormat.getDateTimeInstance().format(new Date()));
-//			args = new String[]{"20120709"};
-			if (args.length > 0)
-				date = args[0];
-			else
-				date = DB_DATETIME_FORMATTER4.format(new Date());
+			today = DB_DATETIME_FORMATTER4.format(new Date());
 
 			conn = DBclass.getConn();
 			existsCheckPS = conn.prepareStatement("select count(0) from tbl_channel_program where channelid=? and program_time=?");
@@ -58,7 +51,7 @@ public class TVGolfRetrieve {
 					.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'cron', now(), 'cron', now())");
 			// retrieve
 			deletePS = conn.prepareStatement("DELETE from tbl_channel_program where channelid=? and program_time < ? and program_time >= ?");
-			delete(date);
+			delete(today);
 			
 			retrieveGolf(url);
 
@@ -108,84 +101,83 @@ public class TVGolfRetrieve {
 				e1.printStackTrace(System.out);
 			}
 		}
-		Elements programs = doc.select("tbody").select("tr");
-		str = new String[programs.size()][7];
-		for (Element program : programs) {
+		Elements rows = doc.select("tbody").select("tr");
+		String[][] programs = parseRows(rows);
+		
+		int weekDay = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK);
+		Date dt = DB_DATETIME_FORMATTER4.parse(today);
+		Calendar calendar=Calendar.getInstance(); 
+	    calendar.setTime(dt); 
+	    calendar.add(Calendar.DAY_OF_MONTH,1); 
+	    String nextDay = DB_DATETIME_FORMATTER4.format(calendar.getTime());
+		
+   for(int i = 0; i<programs.length; i++){
+			String[] program = programs[i];
+			if (program[0] != null && program[0].length()>0){
+				String time = program[0].substring(0, 4);
+				String program_time;
+				Integer hour = Integer.valueOf(time.substring(0, 2));
+				if (hour < 24) {
+					program_time = today.substring(0, 4) + "-" + today.substring(4, 6) + "-" + today.substring(6, 8)
+							+ " " + time;
+				} else {
+					time = (hour - 24) + time.substring(2);
+					program_time = nextDay.substring(0, 4) + "-" + nextDay.substring(4, 6) + "-"
+							+ nextDay.substring(6, 8) + " " + time;
+				}
+				String title = program[1];
+				if (title.length() > 16)
+					title = title.substring(0, 16);
+				String contents = program[1];
+				if (contents.length() > 66)
+					contents = contents.substring(0, 66);
+
+				List<ChannelProgram> cps = ChannelProgram.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
+				for (ChannelProgram cp : cps) {
+					cp.program_time = program_time;
+					cp.title = title;
+					cp.contents = contents;
+					DBclass.print(cp.toString());
+
+					if (cp.channelid != -1)
+						DBclass.addToDb(cp, prevProgramPS, insertPS, existsCheckPS);
+				}
+			}
+		}
+	}
+
+	private static String[][] parseRows(Elements rows) {
+		String[][] programs = new String[rows.size()][2];
+		int rowspan_0 = 0;
+		int rowspan_1 = 0;
+		for (int i = 0; i < rows.size(); i++) {
+			Element row = rows.get(i);
 			try {
-				parseProgram(program);
-				i++;
+				Elements cells = row.children();
+
+				if (rowspan_0 == 0) {
+					Element cell_0 = cells.get(0);
+					rowspan_0 = Integer.valueOf(cell_0.attr("rowspan"));
+					if (rowspan_1 == 0) {
+						Element cell_1 = cells.get(1);
+						rowspan_1 = Integer.valueOf(cell_1.attr("rowspan"));
+						programs[i][0] = DBclass.xmlFilte(cell_1.select("dt").text());
+						programs[i][1] = DBclass.xmlFilte(cell_1.select("dd").text());
+
+					}
+				} else if (rowspan_1 == 0) {
+					Element cell_0 = cells.get(0);
+					rowspan_1 = Integer.valueOf(cell_0.attr("rowspan"));
+					programs[i][0] = DBclass.xmlFilte(cell_0.select("dt").text());
+					programs[i][1] = DBclass.xmlFilte(cell_0.select("dd").text());
+				}
+				rowspan_0--;
+				rowspan_1--;
 			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}
 		}
-		int weekDay = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK);
-		Date dt = DB_DATETIME_FORMATTER4.parse(date);
-		Calendar calendar=Calendar.getInstance(); 
-	    calendar.setTime(dt); 
-	    calendar.add(Calendar.DAY_OF_MONTH,1); 
-	    String date2 = DB_DATETIME_FORMATTER4.format(calendar.getTime());
-		for(int n = 0; n<i; n++){
-			for(int m = 0; m<7; m++){
-				if(m==weekDay-2 && !"*".equals(str[n][m])){
-					String time = str[n][m].substring(0, 5);
-					String program_time;
-					if (Integer.valueOf(time.substring(0, 2)) < 24) {
-						program_time = date.substring(0, 4) + "-" + date.substring(4, 6) + "-" + date.substring(6, 8)
-								+ " " + time;
-					} else {
-						time = (Integer.valueOf(time.substring(0, 2)) - 24) + time.substring(2);
-						program_time = date2.substring(0, 4) + "-" + date2.substring(4, 6) + "-"
-								+ date2.substring(6, 8) + " " + time;
-					}
-					String title = str[n][m].substring(5);
-					if (title.length() > 16)
-						title = title.substring(0, 16);
-					String contents = str[n][m].substring(5);
-					if (contents.length() > 66)
-						contents = contents.substring(0, 66);
-
-					List<ChannelProgram> cps = ChannelProgram.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
-					for (ChannelProgram cp : cps) {
-						cp.program_time = program_time;
-						cp.title = title;
-						cp.contents = contents;
-						if (cp.channelid != -1)
-							DBclass.addToDb(cp, prevProgramPS, insertPS, existsCheckPS);
-					}
-				}
-			}
-		}
-
-	}
-
-	private static void parseProgram(Element element) throws SQLException {
-        
-		Elements children = element.children();
-		
-		int j = 0;
-		int n = 0;
-		for (Element child : children) {
-			
-			if("td".equals(child.tagName())){
-				int rowspan = Integer.valueOf(child.attr("rowspan"));
-				if(i>0){
-					for(int m = j+n; m < 7; m++){
-						if(!"*".equals(str[i][m])){
-							str[i][m] =DBclass.xmlFilte(child.select("dt").text())+ DBclass.xmlFilte(child.select("dd").text());
-							break;
-						}
-						n++;
-					}				
-				}else{
-					str[i][j] =DBclass.xmlFilte(child.select("dt").text()) + DBclass.xmlFilte(child.select("dd").text());				
-				}
-				for(int k = 0; k < rowspan - 1; k++){
-					str[i+k+1][j+n] = "*";
-				}
-				j++;
-				
-			}
-		}
+		return programs;
 	}
 
 	public static void help() {
