@@ -183,7 +183,8 @@ public class TVGolfRetrieve {
 		List<List<Integer>> rowspan = new ArrayList<List<Integer>>();
 		List<List<String[]>> programsList = new ArrayList<List<String[]>>();
 
-		String[][] programs = new String[rows.size()][2];
+		String[][] temp_programs = new String[rows.size()][2];
+		String[][] programs = temp_programs;
 		int[] rowspan_rest = new int[8];
 
 		for (int i = 0; i < rows.size(); i++) {
@@ -247,16 +248,23 @@ public class TVGolfRetrieve {
 
 		}
 
-		for (int n = 0, l = 0; n < programsList.size(); n++, l++) {
+		int l = 0;
+		for (int n = 0; n < programsList.size(); n++, l++) {
 			List<String[]> data = programsList.get(n);
 			String[] program = data.get(column);
 			if (!StringUtils.isNullOrEmpty(program[0])
 					&& !StringUtils.isNullOrEmpty(program[1])) {
-				programs[l][0] = program[0];
-				programs[l][1] = program[1];
+				temp_programs[l][0] = program[0];
+				temp_programs[l][1] = program[1];
 			} else {
 				l--;
 			}
+		}
+
+		programs = new String[l][2];
+		for (int m = 0; m < l; m++) {
+			programs[m][0] = temp_programs[m][0];
+			programs[m][1] = temp_programs[m][1];
 		}
 
 		return programs;
