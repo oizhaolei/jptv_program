@@ -289,10 +289,19 @@ public class SoNetTVProgramsRetrieve {
 										.attr("class"))) {
 									// 节目标题
 									title = DBclass.xmlFilte(el.text());
+									if (title.length() > 16) {
+										title = title.substring(0, 16);
+									}
+
+									// 2016.02.07 contents的内容只存title
+									contents = DBclass.xmlFilte(el.text());
+									if (contents.length() > 66) {
+										contents = contents.substring(0, 66);
+									}
 								} else if (("schedule-summaryC").equals(el
 										.attr("class"))) {
 									// 节目简介
-									contents = DBclass.xmlFilte(el.text());
+//									contents = DBclass.xmlFilte(el.text());
 								}
 							}
 
@@ -306,10 +315,19 @@ public class SoNetTVProgramsRetrieve {
 							if (("schedule-title").equals(el.attr("class"))) {
 								// 节目标题
 								title = DBclass.xmlFilte(el.text());
+								if (title.length() > 16) {
+									title = title.substring(0, 16);
+								}
+
+								// 2016.02.07 contents的内容只存title
+								contents = DBclass.xmlFilte(el.text());
+								if (contents.length() > 66) {
+									contents = contents.substring(0, 66);
+								}
 							} else if (("schedule-summary").equals(el
 									.attr("class"))) {
 								// 节目简介
-								contents = DBclass.xmlFilte(el.text());
+//								contents = DBclass.xmlFilte(el.text());
 							}
 						}
 
