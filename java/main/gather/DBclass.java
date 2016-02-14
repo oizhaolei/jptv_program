@@ -82,7 +82,7 @@ public class DBclass {
 			insertPS.setString(4, cp.program_time);
 
 			insertPS.addBatch();
-			insertPS.executeBatch();
+//			insertPS.executeBatch();
 
 			last_insert_channelid = cp.channelid;
 			last_insert_contents = cp.contents;
