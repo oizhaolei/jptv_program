@@ -143,12 +143,12 @@ public class SoNetTVProgramsRetrieve {
 
 			conn = DBclass.getConn();
 			existsCheckPS = conn
-					.prepareStatement("select count(0) from tbl_channel_program where channelid=? and program_time=?");
+					.prepareStatement("SELECT COUNT(0) FROM tbl_channel_program WHERE channelid=? AND program_time=?");
 			prevProgramPS = conn
-					.prepareStatement("select max(program_time) from tbl_channel_program where channelid=? and program_time<?");
+					.prepareStatement("SELECT MAX(program_time) FROM tbl_channel_program WHERE channelid=? AND program_time<?");
 			insertPS = conn
-					.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'cron', now(), 'cron', now())");
-			deletePS = conn.prepareStatement("DELETE from tbl_channel_program where channelid=? and program_time < ? and program_time >= ?");
+					.prepareStatement("INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) VALUES (?, ?, ?, ?, 'cron', now(), 'cron', now())");
+			deletePS = conn.prepareStatement("DELETE from tbl_channel_program WHERE channelid=? AND program_time < ? AND program_time >= ?");
 			// retrieve
 
 			// args = new String[] { "2" };

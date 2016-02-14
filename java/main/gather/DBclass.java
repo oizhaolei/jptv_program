@@ -67,7 +67,8 @@ public class DBclass {
 
 	public static void addToDb(ChannelProgram cp, PreparedStatement prevProgramPS, PreparedStatement insertPS,
 			PreparedStatement existsCheckPS) throws SQLException {
-		if (!exists(cp, existsCheckPS)) {
+		if (!exists(cp, existsCheckPS) 
+				&& !(cp.channelid == last_insert_channelid && cp.contents.equals(last_insert_contents) && cp.program_time.equals(last_insert_programtime))) {
 			try {
 				addSplit(cp.channelid, cp.program_time, prevProgramPS, insertPS);
 			} catch (ParseException e) {
@@ -82,6 +83,10 @@ public class DBclass {
 
 			insertPS.addBatch();
 			insertPS.executeBatch();
+
+			last_insert_channelid = cp.channelid;
+			last_insert_contents = cp.contents;
+			last_insert_programtime = cp.program_time;
 		} else {
 			DBclass.print("ignore:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
 		}
@@ -158,4 +163,8 @@ public class DBclass {
 		}
 		return false;
 	}
+	
+	public static int last_insert_channelid = 0;
+	public static String last_insert_contents = "";
+	public static String last_insert_programtime = ""; 
 }
