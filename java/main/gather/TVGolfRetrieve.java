@@ -79,7 +79,7 @@ public class TVGolfRetrieve {
 			existsCheckPS = conn.prepareStatement("select count(0) from tbl_channel_program where channelid=? and program_time=?");
 			prevProgramPS = conn.prepareStatement("select max(program_time) from tbl_channel_program where channelid=? and program_time<?");
 			insertPS = conn
-					.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'cron', now(), 'cron', now())");
+					.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'golf', now(), 'golf', now())");
 			// retrieve
 			deletePS = conn.prepareStatement("DELETE from tbl_channel_program where channelid=? and program_time < ? and program_time >= ?");
 			delete(today);
@@ -87,7 +87,7 @@ public class TVGolfRetrieve {
 			retrieveGolf(url);
 
 			existsCheckPS.close();
-			insertPS.executeBatch();
+//			insertPS.executeBatch();
 
 			// 删除超过8天以上的数据
 			conn.createStatement().execute("delete from tbl_channel_program where  DATEDIFF(now(), program_time) >8");

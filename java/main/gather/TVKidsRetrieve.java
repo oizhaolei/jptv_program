@@ -60,14 +60,14 @@ public class TVKidsRetrieve {
 			prevProgramPS = conn
 					.prepareStatement("select max(program_time) from tbl_channel_program where channelid=? and program_time<?");
 			insertPS = conn
-					.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'cron', now(), 'cron', now())");
+					.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'kids', now(), 'kids', now())");
 			deletePS = conn.prepareStatement(DELETE1);
 			delete(dateStr);
 			// retrieve
 			retrieveKids(url, dateStr);
 
 			existsCheckPS.close();
-			insertPS.executeBatch();
+//			insertPS.executeBatch();
 
 			// 删除超过8天以上的数据
 			conn.createStatement().execute("delete from tbl_channel_program where  DATEDIFF(now(), program_time) >8");

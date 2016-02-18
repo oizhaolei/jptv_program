@@ -137,7 +137,7 @@ public class SoNetTVProgramsRetrieve {
 	 */
 	public static void main(String[] args) throws Exception {
 		try {
-			DBclass.print("now: %s",
+			DBclass.print("SoNetTVProgramsRetrieve-------------now: %s",
 					DateFormat.getDateTimeInstance().format(new Date()));
 			date = new Date();
 
@@ -147,7 +147,7 @@ public class SoNetTVProgramsRetrieve {
 			prevProgramPS = conn
 					.prepareStatement("SELECT MAX(program_time) FROM tbl_channel_program WHERE channelid=? AND program_time<?");
 			insertPS = conn
-					.prepareStatement("INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) VALUES (?, ?, ?, ?, 'cron', now(), 'cron', now())");
+					.prepareStatement("INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) VALUES (?, ?, ?, ?, 'sonet', now(), 'sonet', now())");
 			deletePS = conn.prepareStatement("DELETE from tbl_channel_program WHERE channelid=? AND program_time < ? AND program_time >= ?");
 			// retrieve
 
@@ -179,7 +179,7 @@ public class SoNetTVProgramsRetrieve {
 
 			deletePS.close();
 			existsCheckPS.close();
-			insertPS.executeBatch();
+//			insertPS.executeBatch();
 
 			// 删除超过8天以上的数据
 			conn.createStatement()
@@ -218,6 +218,7 @@ public class SoNetTVProgramsRetrieve {
 		boolean timeFlg = true;
 		int sum = 0;
 		Elements charts = doc.getElementById("chartColumn").children();
+		int total_count = 0;
 		for (int i = 0; i < charts.size(); i++) {
 			Element div = charts.get(i);
 			String attr = div.attr("class");
@@ -342,18 +343,20 @@ public class SoNetTVProgramsRetrieve {
 					cp.title = title;
 					cp.contents = contents;
 					if (cp.channelid != -1 && timeFlg) {
+						DBclass.print("SoNetTVProgramsRetrieve-------------add:%s, %s, %s", cp.channelid,
+								cp.title, cp.program_time);
 						DBclass.addToDb(cp, prevProgramPS, insertPS,
 								existsCheckPS);
+						total_count ++;
 					} else {
-						DBclass.print("ignore:%s, %s, %s, %s", cp.channelid,
+						DBclass.print("SoNetTVProgramsRetrieve-------------ignore:%s, %s, %s, %s", cp.channelid,
 								cp.title, cp.program_time, timeFlg);
 					}
 				}
-
 			}
 
 		}
-
+		DBclass.print("SoNetTVProgramsRetrieve-------------------total count : 【%d】", total_count);
 	}
 
 	private static void retrieveProgramByUrl(String url, Date program_date)
