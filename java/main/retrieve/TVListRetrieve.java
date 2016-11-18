@@ -1,4 +1,4 @@
-package gather;
+package retrieve;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -6,15 +6,19 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+
+import model.ChannelProgram;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import setting.GlobalSetting;
+import util.CommonUtil;
+import db.DBclass;
 
 /**
  * 把http://tv.yahoo.co.jp/listings/realtime/内容保存到本地
@@ -31,13 +35,9 @@ public class TVListRetrieve{
 	static String bs3 = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=23";
 	static String bs4 = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=24";
 
-	public final static DateFormat DB_DATETIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER2 = new SimpleDateFormat("yyyy-MM-dd HH", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER3 = new SimpleDateFormat("HH:mm", Locale.JAPAN);
-
 	static Connection conn;
 	static PreparedStatement existsCheckPS;
-	static PreparedStatement prevProgramPS;
+	static PreparedStatement getPrevProgramPS;
 	static PreparedStatement insertPS;
 	public static Date date;
 
@@ -48,14 +48,13 @@ public class TVListRetrieve{
 	 */
 	public static void main(String[] args) throws Exception {
 		try {
-			DBclass.print("now: %s", DateFormat.getDateTimeInstance().format(new Date()));
+			CommonUtil.print("now: %s", DateFormat.getDateTimeInstance().format(new Date()));
 			date = new Date();
 
 			conn = DBclass.getConn();
-			existsCheckPS = conn.prepareStatement("select count(0) from tbl_channel_program where channelid=? and program_time=?");
-			prevProgramPS = conn.prepareStatement("select max(program_time) from tbl_channel_program where channelid=? and program_time<?");
-			insertPS = conn
-					.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'cron', now(), 'cron', now())");
+			existsCheckPS = conn.prepareStatement(GlobalSetting.existsCheck);
+			getPrevProgramPS = conn.prepareStatement(GlobalSetting.getPrevProgram);
+			insertPS = conn.prepareStatement(GlobalSetting.insert_cron);
 			// retrieve
 			retrieveTokyoChijo(tokyo_chijo_url);
 			retrieveTokyoChijo(osaka_chijo_url);
@@ -77,7 +76,7 @@ public class TVListRetrieve{
 				conn.close();
 			}
 		}
-		DBclass.print("-- over --");
+		CommonUtil.print("-- over --");
 	}
 
 	// 地上波
@@ -85,7 +84,7 @@ public class TVListRetrieve{
 
 		Document doc = null;
 		for (int i = 0; doc == null && i < 5; i++) {
-			DBclass.print("%d. retrieving %s", i + 1, url);
+			CommonUtil.print("%d. retrieving %s", i + 1, url);
 			try {
 				doc = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0").timeout(50000).get();
 			} catch (Exception e1) {
@@ -120,11 +119,11 @@ public class TVListRetrieve{
 					channelName = cn.substring(start + 1, end);
 				}
 			} else if ("title".equals(child.tagName())) {
-				title = DBclass.xmlFilte(child.text());
+				title = CommonUtil.xmlFilter(child.text());
 				if (title.length() > 16)
 					title = title.substring(0, 16);
 
-				contents = DBclass.xmlFilte(child.text());
+				contents = CommonUtil.xmlFilter(child.text());
 				if (contents.length() > 66)
 					contents = contents.substring(0, 66);
 				// } else if ("link".equals(child.tagName())) {
@@ -134,7 +133,7 @@ public class TVListRetrieve{
 				String pt = child.text();
 				if (pt.length() > 16) {
 					program_time = pt.substring(0, 10) + ' ' + pt.substring(11, 16);
-					long h = Math.abs(DB_DATETIME_FORMATTER.parse(program_time).getTime() - date.getTime());
+					long h = Math.abs(GlobalSetting.DB_DATETIME_FORMATTER.parse(program_time).getTime() - date.getTime());
 					if (h > 1000 * 5 * 60 * 60) {
 						timeFlg = false;
 					}
@@ -145,11 +144,11 @@ public class TVListRetrieve{
 		for (ChannelProgram cp : cps) {
 			cp.program_time = program_time;
 			cp.title = title;
-			cp.contents = contents;
+			cp.content = contents;
 			if (cp.channelid != -1 && timeFlg)
-				DBclass.addToDb(cp, prevProgramPS, insertPS, existsCheckPS);
+				DBclass.addToDb(cp, getPrevProgramPS, insertPS, existsCheckPS);
 			else
-				DBclass.print("ignore:%s, %s, %s, %s", cp.channelid, cp.title, cp.program_time, timeFlg);
+				CommonUtil.print("ignore:%s, %s, %s, %s", cp.channelid, cp.title, cp.program_time, timeFlg);
 
 			// print("channelname:%s, title:%s, contents:%s, program_time:%s",
 			// cp.channelname, cp.title, cp.contents, cp.program_time);
@@ -159,8 +158,8 @@ public class TVListRetrieve{
 	}
 
 	public static void help() {
-		DBclass.print("java -cp tvlist_gather.jar gather.TVListRetrieve");
-		DBclass.print("java -cp tvlist_gather.jar gather.TVListRetrieve");
+		CommonUtil.print("java -cp tvlist_gather.jar gather.TVListRetrieve");
+		CommonUtil.print("java -cp tvlist_gather.jar gather.TVListRetrieve");
 	}
 
 }

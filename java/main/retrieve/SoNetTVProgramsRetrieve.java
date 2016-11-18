@@ -1,4 +1,4 @@
-package gather;
+package retrieve;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -6,18 +6,23 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+
+import model.ChannelProgram;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import setting.GlobalSetting;
+import util.CommonUtil;
+
 import com.mysql.jdbc.StringUtils;
+
+import db.DBclass;
 
 public class SoNetTVProgramsRetrieve {
 	static String url = "http://tv.so-net.ne.jp/chart/%s.action?head=%s&span=1&sticky=false&descriptive=true";
@@ -30,21 +35,10 @@ public class SoNetTVProgramsRetrieve {
 	static String bs3 = "http://tv.so-net.ne.jp/chart/bs3.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
 	static String bs4 = "http://tv.so-net.ne.jp/chart/bs4.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
 
-	public final static DateFormat DB_DATETIME_FORMATTER = new SimpleDateFormat(
-			"yyyy-MM-dd HH:mm", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER2 = new SimpleDateFormat(
-			"yyyy-MM-dd HH", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER3 = new SimpleDateFormat(
-			"HH:mm", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER4 = new SimpleDateFormat(
-			"yyyyMMdd", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER5 = new SimpleDateFormat(
-			"yyyy-MM-dd", Locale.JAPAN);
-
 	static Connection conn;
 
 	static PreparedStatement existsCheckPS;
-	static PreparedStatement prevProgramPS;
+	static PreparedStatement getPrevProgramPS;
 	static PreparedStatement insertPS;
 	static PreparedStatement deletePS;
 
@@ -66,11 +60,11 @@ public class SoNetTVProgramsRetrieve {
 			List<ChannelProgram> cps = ChannelProgram
 					.onSetChannelname(channelName);
 			//
-			Date dt = DB_DATETIME_FORMATTER4.parse(date);
+			Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(date);
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTime(dt);
 			calendar.add(Calendar.DATE, 1);
-			String date1 = DB_DATETIME_FORMATTER4.format(calendar.getTime());
+			String date1 = GlobalSetting.DB_DATETIME_FORMATTER4.format(calendar.getTime());
 			date1 = date1.substring(0, 4) + "-" + date1.substring(4, 6) + "-"
 					+ date1.substring(6, 8) + " " + "00:00";
 			String date2 = date.substring(0, 4) + "-" + date.substring(4, 6) + "-"
@@ -126,8 +120,8 @@ public class SoNetTVProgramsRetrieve {
 	}
 
 	public static void help() {
-		DBclass.print("java -cp tvlist_gather.jar gather.SoNetTVProgramsRetrieve");
-		DBclass.print("java -cp tvlist_gather.jar gather.SoNetTVProgramsRetrieve");
+		CommonUtil.print("java -cp tvlist_gather.jar gather.SoNetTVProgramsRetrieve");
+		CommonUtil.print("java -cp tvlist_gather.jar gather.SoNetTVProgramsRetrieve");
 	}
 
 	/**
@@ -137,18 +131,15 @@ public class SoNetTVProgramsRetrieve {
 	 */
 	public static void main(String[] args) throws Exception {
 		try {
-			DBclass.print("SoNetTVProgramsRetrieve-------------now: %s",
+			CommonUtil.print("SoNetTVProgramsRetrieve-------------now: %s",
 					DateFormat.getDateTimeInstance().format(new Date()));
 			date = new Date();
 
 			conn = DBclass.getConn();
-			existsCheckPS = conn
-					.prepareStatement("SELECT COUNT(0) FROM tbl_channel_program WHERE channelid=? AND program_time=?");
-			prevProgramPS = conn
-					.prepareStatement("SELECT MAX(program_time) FROM tbl_channel_program WHERE channelid=? AND program_time<?");
-			insertPS = conn
-					.prepareStatement("INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) VALUES (?, ?, ?, ?, 'sonet', now(), 'sonet', now())");
-			deletePS = conn.prepareStatement("DELETE from tbl_channel_program WHERE channelid=? AND program_time < ? AND program_time >= ?");
+			existsCheckPS = conn.prepareStatement(GlobalSetting.existsCheck);
+			getPrevProgramPS = conn.prepareStatement(GlobalSetting.getPrevProgram);
+			insertPS = conn.prepareStatement(GlobalSetting.insert_sonet);
+			deletePS = conn.prepareStatement(GlobalSetting.delete);
 			// retrieve
 
 			// args = new String[] { "2" };
@@ -162,9 +153,9 @@ public class SoNetTVProgramsRetrieve {
 
 			for (int i = 0; i <= days; i++) {
 				Date program_date = getDateAfterSpecifiedDay(new Date(), i);
-				String timeStr = DB_DATETIME_FORMATTER4.format(program_date)
+				String timeStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date)
 						+ "0000";
-				delete(DB_DATETIME_FORMATTER4.format(program_date));
+				delete(GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date));
 				retrieveProgramByUrl(String.format(tokyo_chijo_url, timeStr),
 						program_date);
 				retrieveProgramByUrl(String.format(osaka_chijo_url, timeStr),
@@ -192,7 +183,7 @@ public class SoNetTVProgramsRetrieve {
 				conn.close();
 			}
 		}
-		DBclass.print("-- over --");
+		CommonUtil.print("-- over --");
 	}
 
 	private static String parseCssStyle(String str, String key) {
@@ -225,7 +216,7 @@ public class SoNetTVProgramsRetrieve {
 			if (("cell-station cell-top").equals(attr)) {
 				// 电视台
 				sum = 0;
-				channelName = DBclass.xmlFilte(div.attr("title"));
+				channelName = CommonUtil.xmlFilter(div.attr("title"));
 				title = null;
 				contents = null;
 				program_time = null;
@@ -242,7 +233,7 @@ public class SoNetTVProgramsRetrieve {
 				for (Element program : detail) {
 					if (("td-minute").equals(program.attr("class"))) {
 						// 节目时间
-						String min = DBclass.xmlFilte(program.text()).trim();
+						String min = CommonUtil.xmlFilter(program.text()).trim();
 						if (min.length() == 2) {
 							// if (!("00").equals(min)) {
 							// int h = sum / 297;
@@ -269,7 +260,7 @@ public class SoNetTVProgramsRetrieve {
 
 							String hour = program_hour > 9 ? ("" + program_hour)
 									: ("0" + program_hour);
-							program_time = DB_DATETIME_FORMATTER5
+							program_time = GlobalSetting.DB_DATETIME_FORMATTER5
 									.format(program_date)
 									+ " "
 									+ hour
@@ -281,21 +272,21 @@ public class SoNetTVProgramsRetrieve {
 							Elements els = program.select("span");
 							for (Element el : els) {
 								if (("td-minute").equals(el.attr("class"))) {
-									min = DBclass.xmlFilte(el.text()).trim();
-									program_time = DB_DATETIME_FORMATTER5
+									min = CommonUtil.xmlFilter(el.text()).trim();
+									program_time = GlobalSetting.DB_DATETIME_FORMATTER5
 											.format(getDateAfterSpecifiedDay(
 													program_date, -1))
 											+ " " + min;
 								} else if (("schedule-titleC").equals(el
 										.attr("class"))) {
 									// 节目标题
-									title = DBclass.xmlFilte(el.text());
+									title = CommonUtil.xmlFilter(el.text());
 									if (title.length() > 16) {
 										title = title.substring(0, 16);
 									}
 
 									// 2016.02.07 contents的内容只存title
-									contents = DBclass.xmlFilte(el.text());
+									contents = CommonUtil.xmlFilter(el.text());
 									if (contents.length() > 66) {
 										contents = contents.substring(0, 66);
 									}
@@ -315,13 +306,13 @@ public class SoNetTVProgramsRetrieve {
 						for (Element el : els) {
 							if (("schedule-title").equals(el.attr("class"))) {
 								// 节目标题
-								title = DBclass.xmlFilte(el.text());
+								title = CommonUtil.xmlFilter(el.text());
 								if (title.length() > 16) {
 									title = title.substring(0, 16);
 								}
 
 								// 2016.02.07 contents的内容只存title
-								contents = DBclass.xmlFilte(el.text());
+								contents = CommonUtil.xmlFilter(el.text());
 								if (contents.length() > 66) {
 									contents = contents.substring(0, 66);
 								}
@@ -341,22 +332,22 @@ public class SoNetTVProgramsRetrieve {
 				for (ChannelProgram cp : cps) {
 					cp.program_time = program_time;
 					cp.title = title;
-					cp.contents = contents;
+					cp.content = contents;
 					if (cp.channelid != -1 && timeFlg) {
-						DBclass.print("SoNetTVProgramsRetrieve-------------add:%s, %s, %s", cp.channelid,
+						CommonUtil.print("SoNetTVProgramsRetrieve-------------add:%s, %s, %s", cp.channelid,
 								cp.title, cp.program_time);
-						DBclass.addToDb(cp, prevProgramPS, insertPS,
+						DBclass.addToDb(cp, getPrevProgramPS, insertPS,
 								existsCheckPS);
 						total_count ++;
 					} else {
-						DBclass.print("SoNetTVProgramsRetrieve-------------ignore:%s, %s, %s, %s", cp.channelid,
+						CommonUtil.print("SoNetTVProgramsRetrieve-------------ignore:%s, %s, %s, %s", cp.channelid,
 								cp.title, cp.program_time, timeFlg);
 					}
 				}
 			}
 
 		}
-		DBclass.print("SoNetTVProgramsRetrieve-------------------total count : 【%d】", total_count);
+		CommonUtil.print("SoNetTVProgramsRetrieve-------------------total count : 【%d】", total_count);
 	}
 
 	private static void retrieveProgramByUrl(String url, Date program_date)
@@ -364,7 +355,7 @@ public class SoNetTVProgramsRetrieve {
 
 		Document doc = null;
 		for (int i = 0; doc == null && i < 5; i++) {
-			DBclass.print("%d. retrieving %s", i + 1, url);
+			CommonUtil.print("%d. retrieving %s", i + 1, url);
 			try {
 				doc = Jsoup
 						.connect(url)

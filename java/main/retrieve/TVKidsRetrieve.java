@@ -1,4 +1,4 @@
-package gather;
+package retrieve;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -6,16 +6,20 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+
+import model.ChannelProgram;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import setting.GlobalSetting;
+import util.CommonUtil;
+import db.DBclass;
 
 /**
  * 
@@ -23,17 +27,11 @@ import org.jsoup.select.Elements;
  * 
  */
 public class TVKidsRetrieve {
-	private static final String DELETE1 = "DELETE from tbl_channel_program where channelid=? and program_time < ? and program_time >= ? ";
-
 	static String url = "http://www.kids-station.com/tv/program/daily.aspx?day=%s";
-
-	public final static DateFormat DB_DATETIME_FORMATTER4 = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
-	public final static DateFormat DB_DATETIME_FORMATTER5 = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ENGLISH);
-	public final static DateFormat DB_DATETIME_FORMATTER6 = new SimpleDateFormat("yyyyMMdd a K:mm", Locale.ENGLISH);
 
 	static Connection conn;
 	static PreparedStatement existsCheckPS;
-	static PreparedStatement prevProgramPS;
+	static PreparedStatement getPrevProgramPS;
 	static PreparedStatement insertPS;
 	static PreparedStatement deletePS;
 
@@ -44,24 +42,23 @@ public class TVKidsRetrieve {
 	 */
 	public static void main(String[] args) throws Exception {
 		try {
-			DBclass.print("now: %s", DateFormat.getDateTimeInstance().format(new Date()));
+			CommonUtil.print("now: %s", DateFormat.getDateTimeInstance().format(new Date()));
 			// args = new String[]{"20120709"};
 			String dateStr;
 			if (args.length > 0)
 				dateStr = args[0];
 			else
-				dateStr = DB_DATETIME_FORMATTER4.format(new Date());
+				dateStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(new Date());
 
 			url = String.format(url, dateStr);
 
 			conn = DBclass.getConn();
 			existsCheckPS = conn
 					.prepareStatement("select count(0) from tbl_channel_program where channelid=? and program_time=?");
-			prevProgramPS = conn
+			getPrevProgramPS = conn
 					.prepareStatement("select max(program_time) from tbl_channel_program where channelid=? and program_time<?");
-			insertPS = conn
-					.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'kids', now(), 'kids', now())");
-			deletePS = conn.prepareStatement(DELETE1);
+			insertPS = conn.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'kids', now(), 'kids', now())");
+			deletePS = conn.prepareStatement(GlobalSetting.delete);
 			delete(dateStr);
 			// retrieve
 			retrieveKids(url, dateStr);
@@ -78,26 +75,26 @@ public class TVKidsRetrieve {
 				conn.close();
 			}
 		}
-		DBclass.print("-- over --");
+		CommonUtil.print("-- over --");
 	}
 
 	private static void delete(String date) throws ParseException, SQLException {
 		List<ChannelProgram> cps = ChannelProgram.onSetChannelname("ｷｯｽﾞｽﾃｰｼｮﾝ");
 		//
-		Date dt = DB_DATETIME_FORMATTER4.parse(date);
+		Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(date);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(dt);
 		calendar.add(Calendar.DATE, 1);
-		String date1 = DB_DATETIME_FORMATTER4.format(calendar.getTime());
+		String date1 = GlobalSetting.DB_DATETIME_FORMATTER4.format(calendar.getTime());
 		date1 = date1.substring(0, 4) + "-" + date1.substring(4, 6) + "-" + date1.substring(6, 8) + " " + "06:00";
 		String date2 = date.substring(0, 4) + "-" + date.substring(4, 6) + "-" + date.substring(6, 8) + " " + "06:00";
 		for (ChannelProgram cp : cps) {
 			deletePS.setInt(1, cp.channelid);
 			deletePS.setString(2, date1);
 			deletePS.setString(3, date2);
-			System.out.println(String.format("%s, %s, %s", DELETE1, date1, date2));
+			System.out.println(String.format("%s, %s, %s", GlobalSetting.delete, date1, date2));
 
-			int rows = deletePS.executeUpdate();
+			deletePS.executeUpdate();
 		}
 		deletePS.close();
 	}
@@ -107,7 +104,7 @@ public class TVKidsRetrieve {
 
 		Document doc = null;
 		for (int i = 0; doc == null && i < 5; i++) {
-			DBclass.print("%d. retrieving %s", i + 1, url);
+			CommonUtil.print("%d. retrieving %s", i + 1, url);
 			try {
 				doc = Jsoup.connect(url).userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36")
 						.timeout(200000).get();
@@ -155,32 +152,32 @@ public class TVKidsRetrieve {
 		for (ChannelProgram cp : cps) {
 			cp.program_time = program_time;
 			cp.title = title;
-			cp.contents = contents;
+			cp.content = contents;
 			if (cp.channelid != -1)
-				DBclass.addToDb(cp, prevProgramPS, insertPS, existsCheckPS);
+				DBclass.addToDb(cp, getPrevProgramPS, insertPS, existsCheckPS);
 			// System.out.println(cp);
 		}
 	}
 
 	private static String reformat(String dateStr) throws ParseException {
-		Date dt = DB_DATETIME_FORMATTER6.parse(dateStr);
-		String format = DB_DATETIME_FORMATTER5.format(dt);
+		Date dt = GlobalSetting.DB_DATETIME_FORMATTER6.parse(dateStr);
+		String format = GlobalSetting.DB_DATETIME_FORMATTER7.format(dt);
 		// System.out.println(dateStr + " >> " + format);
 		return format;
 	}
 
 	private static String nextDay(String dateStr) throws Exception {
-		Date dt = DB_DATETIME_FORMATTER4.parse(dateStr);
+		Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(dateStr);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(dt);
 		calendar.add(Calendar.DATE, 1);
-		String dd = DB_DATETIME_FORMATTER4.format(calendar.getTime());
+		String dd = GlobalSetting.DB_DATETIME_FORMATTER4.format(calendar.getTime());
 		return dd;
 	}
 
-	private static void help() {
-		DBclass.print("java -cp tvlist_gather.jar gather.TVKidsRetrieve");
-		DBclass.print("java -cp tvlist_gather.jar gather.TVKidsRetrieve");
+	public static void help() {
+		CommonUtil.print("java -cp tvlist_gather.jar gather.TVKidsRetrieve");
+		CommonUtil.print("java -cp tvlist_gather.jar gather.TVKidsRetrieve");
 	}
 
 }

@@ -1,4 +1,4 @@
-package gather;
+package db;
 
 import java.io.InputStream;
 import java.sql.Connection;
@@ -12,6 +12,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
+
+import model.ChannelProgram;
+import util.CommonUtil;
 
 public class DBclass {
 	public final static DateFormat DB_DATETIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.JAPAN);
@@ -27,44 +30,6 @@ public class DBclass {
 		return c;
 	}
 
-	public static void print(String msg, Object... args) {
-		System.out.println(String.format(msg, args));
-	}
-
-	public static String xmlFilte(String str) {
-		if (str == " ") // 如果字符串为空，直接返回。
-		{
-			return str;
-		} else {
-			str = str.replace("'", " ");
-			str = str.replace("<", "「");
-			str = str.replace(">", "」");
-			str = str.replace("%", "％");
-			str = str.replace("'", " ");
-			str = str.replace("''", " ");
-			str = str.replace("\"\" ", " ");
-			str = str.replace(",", " ");
-			str = str.replace(".", " ");
-			str = str.replace(">=", " ");
-			str = str.replace("=<", " ");
-			str = str.replace("-", " ");
-			str = str.replace("_", " ");
-			str = str.replace(";", " ");
-			str = str.replace("||", " ");
-			str = str.replace("[", "「");
-			str = str.replace("]", "」");
-			str = str.replace("&", "＆");
-			str = str.replace("/", " ");
-			str = str.replace("-", " ");
-			str = str.replace("|", " ");
-			str = str.replace("?", " ");
-			str = str.replace(">?", " ");
-			str = str.replace("?<", " ");
-			str = str.replace(" ", " ");
-			return str;
-		}
-	}
-
 	public static void addToDb(ChannelProgram cp, PreparedStatement prevProgramPS, PreparedStatement insertPS,
 			PreparedStatement existsCheckPS) throws SQLException {
 		if (!exists(cp, existsCheckPS)) {
@@ -74,16 +39,16 @@ public class DBclass {
 				e.printStackTrace(System.out);
 			}
 
-			DBclass.print("add:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+			CommonUtil.print("add:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
 			insertPS.setInt(1, cp.channelid);
 			insertPS.setString(2, cp.title);
-			insertPS.setString(3, cp.contents);
+			insertPS.setString(3, cp.content);
 			insertPS.setString(4, cp.program_time);
 
 			insertPS.addBatch();
 			insertPS.executeBatch();
 		} else {
-			DBclass.print("ignore:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+			CommonUtil.print("ignore:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
 		}
 	}
 
@@ -108,7 +73,7 @@ public class DBclass {
 		Date[] split = getSplit(prev_program_time, program_time);
 		if (split != null)
 			for (int i = 0; i < split.length; i++) {
-				DBclass.print("add split:%s, %s", channelid, split[i]);
+				CommonUtil.print("add split:%s, %s", channelid, split[i]);
 
 				insertPS.setInt(1, channelid);
 				insertPS.setString(2, "");

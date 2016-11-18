@@ -1,22 +1,27 @@
-package gather;
+package retrieve;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+
+import model.ChannelProgram;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import setting.GlobalSetting;
+import util.CommonUtil;
+
 import com.mysql.jdbc.StringUtils;
+
+import db.DBclass;
 
 /**
  *
@@ -25,15 +30,6 @@ import com.mysql.jdbc.StringUtils;
  */
 public class YahooProgramsRetrieve {
 	static String url = "http://tv.yahoo.co.jp/listings/%s/?st=4&s=1&va=24&vc=0&vd=0&ve=0&vb=0&a=23&d=%s";
-
-	public final static DateFormat DB_DATETIME_FORMATTER = new SimpleDateFormat(
-			"yyyy-MM-dd HH:mm", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER2 = new SimpleDateFormat(
-			"yyyy-MM-dd HH", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER3 = new SimpleDateFormat(
-			"HH:mm", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER4 = new SimpleDateFormat(
-			"yyyyMMdd", Locale.JAPAN);
 
 	static Connection conn;
 	static PreparedStatement existsCheckPS;
@@ -78,11 +74,11 @@ public class YahooProgramsRetrieve {
 	private static void delete(String date) throws Exception {
 		List<ChannelProgram> cps = ChannelProgram
 				.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
-		Date dt = DB_DATETIME_FORMATTER4.parse(date);
+		Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(date);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(dt);
 		calendar.add(Calendar.DAY_OF_MONTH, 1);
-		String date1 = DB_DATETIME_FORMATTER4.format(calendar.getTime());
+		String date1 = GlobalSetting.DB_DATETIME_FORMATTER4.format(calendar.getTime());
 		date1 = date1.substring(0, 4) + "-" + date1.substring(4, 6) + "-"
 				+ date1.substring(6, 8) + " " + "04:00";
 		String date2 = date.substring(0, 4) + "-" + date.substring(4, 6) + "-"
@@ -98,8 +94,8 @@ public class YahooProgramsRetrieve {
 	}
 
 	public static void help() {
-		DBclass.print("java -cp tvlist_gather.jar gather.TVGolfRetrieve");
-		DBclass.print("java -cp tvlist_gather.jar gather.TVGolfRetrieve");
+		CommonUtil.print("java -cp tvlist_gather.jar gather.TVGolfRetrieve");
+		CommonUtil.print("java -cp tvlist_gather.jar gather.TVGolfRetrieve");
 	}
 
 	public static void initChannelList() {
@@ -121,16 +117,16 @@ public class YahooProgramsRetrieve {
 		try {
 			initChannelList();
 
-			DBclass.print("now: %s",
+			CommonUtil.print("now: %s",
 					DateFormat.getDateTimeInstance().format(new Date()));
-			today = DB_DATETIME_FORMATTER4.format(new Date());
+			today = GlobalSetting.DB_DATETIME_FORMATTER4.format(new Date());
 
 			args = new String[] { "20160113", "bs1" };
 			String dateStr;
 			if (args.length > 0) {
 				dateStr = args[0];
 			} else {
-				dateStr = DB_DATETIME_FORMATTER4.format(new Date());
+				dateStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(new Date());
 			}
 
 			String channelStr;
@@ -171,7 +167,7 @@ public class YahooProgramsRetrieve {
 				conn.close();
 			}
 		}
-		DBclass.print("-- over --");
+		CommonUtil.print("-- over --");
 	}
 
 	private static int parseChannel(Elements channelElements, int channelset,
@@ -182,7 +178,7 @@ public class YahooProgramsRetrieve {
 		Elements channelNotes = channelElements.select("td");
 		for (int j = 1; j < channelNotes.size(); j++) {
 			Element el = channelNotes.get(j);
-			String temp = DBclass.xmlFilte(el.text());
+			String temp = CommonUtil.xmlFilter(el.text());
 			if (temp.indexOf(channelname) > -1) {
 				column = j;
 				break;
@@ -240,9 +236,9 @@ public class YahooProgramsRetrieve {
 									.valueOf(cell.attr("rowspan"));
 							rowspanlist.add(span);
 							String[] program = new String[2];
-							program[0] = DBclass.xmlFilte(cell.select("dt")
+							program[0] = CommonUtil.xmlFilter(cell.select("dt")
 									.text());
-							program[1] = DBclass.xmlFilte(cell.select("dd")
+							program[1] = CommonUtil.xmlFilter(cell.select("dd")
 									.text());
 							data.add(program);
 
@@ -303,7 +299,7 @@ public class YahooProgramsRetrieve {
 
 		Document doc = null;
 		for (int i = 0; doc == null && i < 5; i++) {
-			DBclass.print("%d. retrieving %s", i + 1, url);
+			CommonUtil.print("%d. retrieving %s", i + 1, url);
 			try {
 				doc = Jsoup
 						.connect(url)
@@ -332,11 +328,11 @@ public class YahooProgramsRetrieve {
 
 
 
-		Date dt = DB_DATETIME_FORMATTER4.parse(today);
+		Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(today);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(dt);
 		calendar.add(Calendar.DAY_OF_MONTH, 1);
-		String nextDay = DB_DATETIME_FORMATTER4.format(calendar.getTime());
+		String nextDay = GlobalSetting.DB_DATETIME_FORMATTER4.format(calendar.getTime());
 
 		for (int i = 0; i < programs.length; i++) {
 			String[] program = programs[i];
@@ -368,8 +364,8 @@ public class YahooProgramsRetrieve {
 				for (ChannelProgram cp : cps) {
 					cp.program_time = program_time;
 					cp.title = title;
-					cp.contents = contents;
-					DBclass.print(cp.toString());
+					cp.content = contents;
+					CommonUtil.print(cp.toString());
 
 					if (cp.channelid != -1)
 						DBclass.addToDb(cp, prevProgramPS, insertPS,
