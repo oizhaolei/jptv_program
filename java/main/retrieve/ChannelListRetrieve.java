@@ -8,7 +8,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 
-import model.ChannelProgram;
 import setting.GlobalSetting;
 import util.CommonUtil;
 import db.DBclass;
@@ -38,8 +37,8 @@ public class ChannelListRetrieve {
 			insertPS = conn.prepareStatement(GlobalSetting.insert_cron);
 
 			// 对所有的channelid进行循环
-			for (int i = 0; i < ChannelProgram.channelMatrix.length; i++) {
-				String[] cp = ChannelProgram.channelMatrix[i];
+			for (int i = 0; i < GlobalSetting.channelMatrix.length; i++) {
+				String[] cp = GlobalSetting.channelMatrix[i];
 
 				addChannelTimeStep(cp[0]);
 			}

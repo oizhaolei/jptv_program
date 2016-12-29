@@ -71,9 +71,9 @@ public class YahooProgramsRetrieve {
 			{ "nottv6", "AXN　海外ドラマ" }, { "nottv7", "アニマックス" },
 			{ "nottv8", "スカサカ！24時間サッカー専門チャンネル" } };
 
+	@SuppressWarnings("unused")
 	private static void delete(String date) throws Exception {
-		List<ChannelProgram> cps = ChannelProgram
-				.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
+		List<ChannelProgram> cps = GlobalSetting.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
 		Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(date);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(dt);
@@ -188,6 +188,7 @@ public class YahooProgramsRetrieve {
 		return column;
 	}
 
+	@SuppressWarnings("unused")
 	private static int parseChannel(String channelname) throws ParseException {
 		int column = 0;
 
@@ -359,8 +360,7 @@ public class YahooProgramsRetrieve {
 				if (contents.length() > 66)
 					contents = contents.substring(0, 66);
 
-				List<ChannelProgram> cps = ChannelProgram
-						.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
+				List<ChannelProgram> cps = GlobalSetting.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
 				for (ChannelProgram cp : cps) {
 					cp.program_time = program_time;
 					cp.title = title;

@@ -79,7 +79,7 @@ public class TVKidsRetrieve {
 	}
 
 	private static void delete(String date) throws ParseException, SQLException {
-		List<ChannelProgram> cps = ChannelProgram.onSetChannelname("ｷｯｽﾞｽﾃｰｼｮﾝ");
+		List<ChannelProgram> cps = GlobalSetting.onSetChannelname("ｷｯｽﾞｽﾃｰｼｮﾝ");
 		//
 		Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(date);
 		Calendar calendar = Calendar.getInstance();
@@ -148,7 +148,7 @@ public class TVKidsRetrieve {
 		if (contents.length() > 66)
 			contents = contents.substring(0, 66);
 
-		List<ChannelProgram> cps = ChannelProgram.onSetChannelname("ｷｯｽﾞｽﾃｰｼｮﾝ");
+		List<ChannelProgram> cps = GlobalSetting.onSetChannelname("ｷｯｽﾞｽﾃｰｼｮﾝ");
 		for (ChannelProgram cp : cps) {
 			cp.program_time = program_time;
 			cp.title = title;

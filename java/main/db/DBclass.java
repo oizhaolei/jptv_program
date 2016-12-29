@@ -6,19 +6,15 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Properties;
 
 import model.ChannelProgram;
+import setting.GlobalSetting;
 import util.CommonUtil;
 
 public class DBclass {
-	public final static DateFormat DB_DATETIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.JAPAN);
-	public final static DateFormat DB_DATETIME_FORMATTER2 = new SimpleDateFormat("yyyy-MM-dd HH", Locale.JAPAN);
 	static Properties env = new Properties();
 
 	public static Connection getConn() throws Exception {
@@ -29,9 +25,18 @@ public class DBclass {
 				env.getProperty("jdbc.password"));
 		return c;
 	}
+	private static void trim(ChannelProgram cp) {
+		if (cp.title.length() > 50) {
+			cp.title = cp.title.substring(0, 50);
+		}
+		if (cp.content.length() > 200) {
+			cp.content = cp.content.substring(0, 50);
+		}
+	}
 
 	public static void addToDb(ChannelProgram cp, PreparedStatement prevProgramPS, PreparedStatement insertPS,
 			PreparedStatement existsCheckPS) throws SQLException {
+		trim(cp);
 		if (!exists(cp, existsCheckPS)) {
 			try {
 				addSplit(cp.channelid, cp.program_time, prevProgramPS, insertPS);
@@ -40,6 +45,7 @@ public class DBclass {
 			}
 
 			CommonUtil.print("add:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+
 			insertPS.setInt(1, cp.channelid);
 			insertPS.setString(2, cp.title);
 			insertPS.setString(3, cp.content);
@@ -47,6 +53,39 @@ public class DBclass {
 
 			insertPS.addBatch();
 			insertPS.executeBatch();
+		} else {
+			CommonUtil.print("ignore:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+		}
+	}
+
+	public static void addToDb(ChannelProgram cp, PreparedStatement prevProgramPS, PreparedStatement insertPS,
+			PreparedStatement updatePS, PreparedStatement selectPS) throws SQLException {
+		trim(cp);
+		ChannelProgram cp_db = getChannelProgram(cp, selectPS);
+		if (!isSameProgram(cp_db, cp)) {
+			if (cp.channelid == cp_db.channelid && cp.program_time.equals(cp_db.program_time)) {
+				CommonUtil.print("update:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+				updatePS.setString(1, cp.title);
+				updatePS.setString(2, cp.content);
+				updatePS.setInt(3, cp.channelid);
+				updatePS.setString(4, cp.program_time);
+				updatePS.execute();
+			} else {
+				try {
+					addSplit(cp.channelid, cp.program_time, prevProgramPS, insertPS);
+				} catch (ParseException e) {
+					e.printStackTrace(System.out);
+				}
+
+				CommonUtil.print("add:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+				insertPS.setInt(1, cp.channelid);
+				insertPS.setString(2, cp.title);
+				insertPS.setString(3, cp.content);
+				insertPS.setString(4, cp.program_time);
+
+				insertPS.addBatch();
+				insertPS.executeBatch();
+			}
 		} else {
 			CommonUtil.print("ignore:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
 		}
@@ -78,7 +117,7 @@ public class DBclass {
 				insertPS.setInt(1, channelid);
 				insertPS.setString(2, "");
 				insertPS.setString(3, "");
-				insertPS.setString(4, DB_DATETIME_FORMATTER.format(split[i]));
+				insertPS.setString(4, GlobalSetting.DB_DATETIME_FORMATTER.format(split[i]));
 
 				insertPS.addBatch();
 			}
@@ -93,13 +132,13 @@ public class DBclass {
 	 * @throws ParseException
 	 */
 	private static Date[] getSplit(String prev_program_time, String program_time) throws ParseException {
-		Date date2 = DB_DATETIME_FORMATTER2.parse(program_time);
+		Date date2 = GlobalSetting.DB_DATETIME_FORMATTER2.parse(program_time);
 		int hourMillis = 60 * 60 * 1000;
 
 		if (prev_program_time == null) {
 			return null;
 		}
-		Date date1 = DB_DATETIME_FORMATTER2.parse(prev_program_time);
+		Date date1 = GlobalSetting.DB_DATETIME_FORMATTER2.parse(prev_program_time);
 		int h = (new Long((date2.getTime() - date1.getTime()) / (hourMillis))).intValue();
 		if (h < 1)
 			return null;
@@ -122,5 +161,31 @@ public class DBclass {
 			return count > 0;
 		}
 		return false;
+	}
+
+	private static ChannelProgram getChannelProgram(ChannelProgram cp, PreparedStatement selectPS) throws SQLException {
+		selectPS.setInt(1, cp.channelid);
+		selectPS.setString(2, cp.program_time);
+		ChannelProgram result = new ChannelProgram();
+		ResultSet rs = selectPS.executeQuery();
+		if (rs.next()) {
+			result.channelid = cp.channelid;
+			result.program_time = cp.program_time;
+			result.title = rs.getString(1);
+			result.content = rs.getString(2);
+			rs.close();
+		}
+		return result;
+	}
+	private static boolean isSameProgram(ChannelProgram program_db, ChannelProgram program_new) {
+		if (program_new.title.equals(program_db.title)
+				&& program_new.content.equals(program_db.content)
+				&& program_new.program_time.equals(program_db.program_time)
+				&& program_new.channelid == program_db.channelid
+				) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

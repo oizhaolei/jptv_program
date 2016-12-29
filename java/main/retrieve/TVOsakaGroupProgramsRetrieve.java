@@ -24,19 +24,15 @@ import com.mysql.jdbc.StringUtils;
 
 import db.DBclass;
 
-public class SoNetTVProgramsRetrieve {
+public class TVOsakaGroupProgramsRetrieve {
 	static String url = "http://tv.so-net.ne.jp/chart/%s.action?head=%s&span=1&sticky=false&descriptive=true";
 
-	static String tokyo_chijo_url = "http://tv.so-net.ne.jp/chart/23.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
 	static String osaka_chijo_url = "http://tv.so-net.ne.jp/chart/40.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
-	static String kobe_chijo_url = "http://tv.so-net.ne.jp/chart/42.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
-	static String bs1 = "http://tv.so-net.ne.jp/chart/bs1.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
-	static String bs2 = "http://tv.so-net.ne.jp/chart/bs2.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
-	static String bs3 = "http://tv.so-net.ne.jp/chart/bs3.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
-	static String bs4 = "http://tv.so-net.ne.jp/chart/bs4.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
 
 	static Connection conn;
 
+//	static PreparedStatement selectPS;
+//	static PreparedStatement updatePs;
 	static PreparedStatement existsCheckPS;
 	static PreparedStatement getPrevProgramPS;
 	static PreparedStatement insertPS;
@@ -44,19 +40,11 @@ public class SoNetTVProgramsRetrieve {
 
 	public static Date date;
 
-	public static String[] channelNames = { "ＮＨＫ総合・東京", "ＮＨＫＥテレ１・東京", "日テレ",
-			"テレビ朝日", "ＴＢＳ", "テレビ東京", "フジテレビ", "ＴＯＫＹＯ　ＭＸ１", "放送大学１", "ＮＨＫ ＢＳ１",
-			"ＮＨＫ ＢＳプレミアム", "ＢＳ日テレ", "ＢＳ朝日", "ＢＳ-ＴＢＳ", "ＢＳジャパン", "ＢＳフジ",
-			"ＷＯＷＯＷプライム", "ＷＯＷＯＷライブ", "ＷＯＷＯＷシネマ", "スター・チャンネル1", "スター・チャンネル2",
-			"スター・チャンネル3", "ＢＳ１１", "BS12 トゥエルビ", "放送大学BS1", "グリーンチャンネル",
-			"BSアニマックス", "FOXスポーツエンタ", "BSスカパー!", "J SPORTS 1", "J SPORTS 2",
-			"J SPORTS 3", "J SPORTS 4", "BS釣りビジョン", "イマジカBS", "BS日本映画専門チャンネル",
-			"ディズニー・チャンネル", "ディーライフ", "ウェザーニュース", "ＮＨＫ総合・大阪", "ＮＨＫＥテレ１・大阪",
-			"ＭＢＳ毎日放送", "ＡＢＣテレビ", "テレビ大阪", "関西テレビ", "よみうりテレビ", "ＮＨＫ総合・神戸",
-			"サンテレビ" };
+	private static String[] channelNamesInGroup = { "ＮＨＫ総合・大阪", "ＮＨＫＥテレ１・大阪",
+			"ＭＢＳ毎日放送", "ＡＢＣテレビ", "テレビ大阪", "関西テレビ", "よみうりテレビ", "サンテレビ" };
 
 	private static void delete(String date) throws ParseException, SQLException {
-		for(String channelName : channelNames) {
+		for(String channelName : channelNamesInGroup) {
 			List<ChannelProgram> cps = GlobalSetting.onSetChannelname(channelName);
 			//
 			Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(date);
@@ -135,6 +123,8 @@ public class SoNetTVProgramsRetrieve {
 			date = new Date();
 
 			conn = DBclass.getConn();
+//			selectPS = conn.prepareStatement(GlobalSetting.selectProgram);
+//			updatePs = conn.prepareStatement(GlobalSetting.updateProgram);
 			existsCheckPS = conn.prepareStatement(GlobalSetting.existsCheck);
 			getPrevProgramPS = conn.prepareStatement(GlobalSetting.getPrevProgram);
 			insertPS = conn.prepareStatement(GlobalSetting.insert_sonet);
@@ -150,31 +140,21 @@ public class SoNetTVProgramsRetrieve {
 				days = 0;
 			}
 
+			// 删除已有数据
 			for (int i = 0; i <= days; i++) {
 				Date program_date = getDateAfterSpecifiedDay(new Date(), i);
-				String timeStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date)
-						+ "0000";
+				String timeStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date) + "0000";
 				delete(GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date));
-				retrieveProgramByUrl(String.format(tokyo_chijo_url, timeStr),
-						program_date);
-				retrieveProgramByUrl(String.format(osaka_chijo_url, timeStr),
-						program_date);
-				retrieveProgramByUrl(String.format(kobe_chijo_url, timeStr),
-						program_date);
-				retrieveProgramByUrl(String.format(bs1, timeStr), program_date);
-				retrieveProgramByUrl(String.format(bs2, timeStr), program_date);
-				retrieveProgramByUrl(String.format(bs3, timeStr), program_date);
-				retrieveProgramByUrl(String.format(bs4, timeStr), program_date);
+				retrieveProgramByUrl(String.format(osaka_chijo_url, timeStr), program_date);
 			}
 
 			deletePS.close();
+//			selectPS.close();
+//			updatePs.close();
 			existsCheckPS.close();
-//			insertPS.executeBatch();
 
 			// 删除超过8天以上的数据
-			conn.createStatement()
-					.execute(
-							"delete from tbl_channel_program where  DATEDIFF(now(), program_time) >8");
+			conn.createStatement().execute("delete from tbl_channel_program where  DATEDIFF(now(), program_time) >8");
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
 		} finally {
@@ -280,19 +260,19 @@ public class SoNetTVProgramsRetrieve {
 										.attr("class"))) {
 									// 节目标题
 									title = CommonUtil.xmlFilter(el.text());
-									if (title.length() > 16) {
-										title = title.substring(0, 16);
-									}
+//									if (title.length() > 16) {
+//										title = title.substring(0, 16);
+//									}
 
 									// 2016.02.07 contents的内容只存title
-									contents = CommonUtil.xmlFilter(el.text());
-									if (contents.length() > 66) {
-										contents = contents.substring(0, 66);
-									}
+//									contents = CommonUtil.xmlFilter(el.text());
+//									if (contents.length() > 66) {
+//										contents = contents.substring(0, 66);
+//									}
 								} else if (("schedule-summaryC").equals(el
 										.attr("class"))) {
 									// 节目简介
-//									contents = DBclass.xmlFilte(el.text());
+									contents = CommonUtil.xmlFilter(el.text());
 								}
 							}
 
@@ -306,19 +286,19 @@ public class SoNetTVProgramsRetrieve {
 							if (("schedule-title").equals(el.attr("class"))) {
 								// 节目标题
 								title = CommonUtil.xmlFilter(el.text());
-								if (title.length() > 16) {
-									title = title.substring(0, 16);
-								}
+//								if (title.length() > 16) {
+//									title = title.substring(0, 16);
+//								}
 
 								// 2016.02.07 contents的内容只存title
-								contents = CommonUtil.xmlFilter(el.text());
-								if (contents.length() > 66) {
-									contents = contents.substring(0, 66);
-								}
+//								contents = CommonUtil.xmlFilter(el.text());
+//								if (contents.length() > 66) {
+//									contents = contents.substring(0, 66);
+//								}
 							} else if (("schedule-summary").equals(el
 									.attr("class"))) {
 								// 节目简介
-//								contents = DBclass.xmlFilte(el.text());
+								contents = CommonUtil.xmlFilter(el.text());
 							}
 						}
 
@@ -334,6 +314,7 @@ public class SoNetTVProgramsRetrieve {
 					if (cp.channelid != -1 && timeFlg) {
 						CommonUtil.print("SoNetTVProgramsRetrieve-------------add:%s, %s, %s", cp.channelid,
 								cp.title, cp.program_time);
+//						DBclass.addToDb(cp, getPrevProgramPS, insertPS, updatePs, selectPS);
 						DBclass.addToDb(cp, getPrevProgramPS, insertPS,	existsCheckPS);
 						total_count ++;
 					} else {

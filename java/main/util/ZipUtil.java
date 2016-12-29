@@ -3,10 +3,12 @@ package util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
@@ -101,45 +103,42 @@ public class ZipUtil {
 	 * 
 	 * @param zippath
 	 * @param outzippath
+	 * @throws IOException 
+	 * @throws ZipException 
 	 */
-	public static void decompressMultiFiles(String zippath, String outzippath) {
-		try {
-			File file = new File(zippath);
-			File outDir = new File(outzippath);
-			if (!outDir.exists() && outDir.isDirectory()) {
-				outDir.mkdir();
+	public static void decompressMultiFiles(String zippath, String outzippath) throws ZipException, IOException {
+		File file = new File(zippath);
+		File outDir = new File(outzippath);
+		if (!outDir.exists() && outDir.isDirectory()) {
+			outDir.mkdir();
+		}
+		File outFile = null;
+		ZipFile zipFile = new ZipFile(file);
+		ZipEntry entry = null;
+		InputStream input = null;
+		OutputStream output = null;
+		Enumeration<? extends ZipEntry> entries = zipFile.entries();
+		while (entries.hasMoreElements()) {
+			entry = (ZipEntry) entries.nextElement();
+			if (null == entry) {
+				break;
 			}
-			File outFile = null;
-			ZipFile zipFile = new ZipFile(file);
-//			ZipInputStream zipInput = new ZipInputStream(new FileInputStream(file));
-			ZipEntry entry = null;
-			InputStream input = null;
-			OutputStream output = null;
-			Enumeration entries = zipFile.entries();
-			while (entries.hasMoreElements()) {
-				entry = (ZipEntry) entries.nextElement();
-				if (null == entry) {
-					break;
-				}
-				CommonUtil.print("解压缩" + entry.getName() + "文件");
-				outFile = new File(outzippath + File.separator + entry.getName());
-				if (!outFile.getParentFile().exists()) {
-					outFile.getParentFile().mkdir();
-				}
-				if (!outFile.exists()) {
-					outFile.createNewFile();
-				}
-				input = zipFile.getInputStream(entry);
-				output = new FileOutputStream(outFile);
-				int temp = 0;
-				while ((temp = input.read()) != -1) {
-					output.write(temp);
-				}
-				input.close();
-				output.close();
+			CommonUtil.print("解压缩" + entry.getName() + "文件");
+			outFile = new File(outzippath + File.separator + entry.getName());
+			if (!outFile.getParentFile().exists()) {
+				outFile.getParentFile().mkdir();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+			if (!outFile.exists()) {
+				outFile.createNewFile();
+			}
+			input = zipFile.getInputStream(entry);
+			output = new FileOutputStream(outFile);
+			int temp = 0;
+			while ((temp = input.read()) != -1) {
+				output.write(temp);
+			}
+			input.close();
+			output.close();
 		}
 	}
 

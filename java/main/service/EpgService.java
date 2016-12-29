@@ -2,6 +2,7 @@ package service;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.zip.ZipException;
 
 import model.ChannelProgram;
 import model.JsonChannel;
@@ -27,25 +29,30 @@ import util.ZipUtil;
 import db.DBclass;
 
 public class EpgService {
-	private static String md5Key = "a4b8c1x0y7z4";
-	private static String zipFilePath = "/tmp";
+	private final static String md5Key = "a4b8c1x0y7z4";
+	private static String zipFilePath = "/root/epgdata";
 //	private static String zipFilePath = "C:/Work/logs";
 	private static String channelJsonFile = "EnumService";
 	private static String programsJsonFile = "EnumServiceEvent";
+	private final static String TOKYO = "tky_";
+	private final static String OSAKA = "osk_";
 
 	private static Map<String, JsonChannel> channelMap = new HashMap<String, JsonChannel>();
 	private static Connection conn;
+
+	private static PreparedStatement selectPS;
+	private static PreparedStatement updatePS;
 	private static PreparedStatement existsCheckPS;
 	private static PreparedStatement getPrevProgramPS;
 	private static PreparedStatement insertPS;
 	private static PreparedStatement deletePS;
 
-	private static void unzipFile() throws UnsupportedEncodingException {
-		String key = GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + md5Key;
+	private static void unzipFile(String filePre) throws ZipException, IOException {
         //加密后的字符串
+		String key = GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + md5Key;
 		String hash = CommonUtil.toMD5(key.getBytes("utf-8"));
-		String zipFile = zipFilePath + File.separator + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "_" + hash + ".zip";
-		ZipUtil.decompressMultiFiles(zipFile, zipFilePath + File.separator + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + File.separator);
+		String zipFile = zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "_" + hash + ".zip";
+		ZipUtil.decompressMultiFiles(zipFile, zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + File.separator);
 	}
 	private static String scanJsonFile(String fullName) {
 		Scanner scanner = null;
@@ -67,15 +74,15 @@ public class EpgService {
 		return buffer.toString();
 	}
 
-	private static void parseChannelJsonFile() {
-		String buffer = scanJsonFile(zipFilePath + File.separator + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "/" + channelJsonFile);
+	private static void parseChannelJsonFile(String filePre) {
+		String buffer = scanJsonFile(zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "/" + channelJsonFile);
 
 		try {
 			JSONArray channelsArray = new JSONObject(buffer).getJSONArray("Data");
 			for (int i = 0; i < channelsArray.length(); i ++) {
 				JSONObject channelObject = channelsArray.getJSONObject(i);
 				JsonChannel channel = new JsonChannel(channelObject);
-				if (ChannelProgram.isAvailiable(channel.service_name)) {
+				if (GlobalSetting.isAvailiable(channel.service_name)) {
 					channelMap.put(channel.key, channel);
 					//System.out.println("{key:" + channel.key + ", name:" + channel.service_name + "}");
 				}
@@ -85,8 +92,8 @@ public class EpgService {
 		}
 	}
 
-	private static void parseProgramJsonFile() {
-		String buffer = scanJsonFile(zipFilePath + File.separator + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "/" + programsJsonFile);
+	private static void parseProgramJsonFile(String filePre) {
+		String buffer = scanJsonFile(zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "/" + programsJsonFile);
 
 		try {
 			JSONArray channelprogramArray = new JSONObject(buffer).getJSONObject("Data").getJSONArray("Epg");
@@ -131,31 +138,36 @@ public class EpgService {
 			return;
 		}
 		String channelName = channel.service_name;
-		List<ChannelProgram> cps = ChannelProgram.onSetChannelname(channelName);
+		List<ChannelProgram> cps = GlobalSetting.onSetChannelname(channelName);
 		for (ChannelProgram cp : cps) {
 			cp.program_time = GlobalSetting.DB_DATETIME_FORMATTER.format(new Date(program.starttime + 3600000));
 			cp.title = program.title;
 			cp.content = program.content;
 			if (cp.channelid != -1) {
-				DBclass.addToDb(cp, getPrevProgramPS, insertPS, existsCheckPS);
+//				DBclass.addToDb(cp, getPrevProgramPS, insertPS, existsCheckPS);
+				DBclass.addToDb(cp, getPrevProgramPS, insertPS, updatePS, selectPS);
 			} else {
 				CommonUtil.print("ignore:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
 			}
 		}
 	}
 
-	public static void main(String[] args) throws SQLException, NoSuchAlgorithmException, UnsupportedEncodingException {
-		unzipFile();
+	private static void parseZipFile(String filePre) throws SQLException, NoSuchAlgorithmException, ZipException, IOException {
+		unzipFile(filePre);
 		try {
 			conn = DBclass.getConn();
+			selectPS = conn.prepareStatement(GlobalSetting.selectProgram);
+			updatePS = conn.prepareStatement(GlobalSetting.updateProgram);
 			existsCheckPS = conn.prepareStatement(GlobalSetting.existsCheck);
 			getPrevProgramPS = conn.prepareStatement(GlobalSetting.getPrevProgram);
 			insertPS = conn.prepareStatement(GlobalSetting.insert_epg);
 
-			parseChannelJsonFile();
+			parseChannelJsonFile(filePre);
 
-			parseProgramJsonFile();
+			parseProgramJsonFile(filePre);
 
+			selectPS.close();
+			updatePS.close();
 			existsCheckPS.close();
 			getPrevProgramPS.close();
 			insertPS.close();
@@ -171,6 +183,38 @@ public class EpgService {
 				conn.close();
 			}
 		}
+	}
+
+	public static void main(String[] args) {
+		String pre;
+			try {
+				pre = TOKYO;
+				parseZipFile(pre);
+			} catch (NoSuchAlgorithmException e) {
+				CommonUtil.print("NoSuchAlgorithmException(TOKYO): " + e.toString());
+			} catch (UnsupportedEncodingException e) {
+				CommonUtil.print("UnsupportedEncodingException(TOKYO): " + e.toString());
+			} catch (SQLException e) {
+				CommonUtil.print("SQLException(TOKYO): " + e.toString());
+			} catch (ZipException e) {
+				CommonUtil.print("ZipException(TOKYO): " + e.toString());
+			} catch (IOException e) {
+				CommonUtil.print("IOException(TOKYO): " + e.toString());
+			}
+			try {
+				pre = OSAKA;
+				parseZipFile(pre);
+			} catch (NoSuchAlgorithmException e) {
+				CommonUtil.print("NoSuchAlgorithmException(OSAKA): " + e.toString());
+			} catch (UnsupportedEncodingException e) {
+				CommonUtil.print("UnsupportedEncodingException(OSAKA): " + e.toString());
+			} catch (SQLException e) {
+				CommonUtil.print("SQLException(OSAKA): " + e.toString());
+			} catch (ZipException e) {
+				CommonUtil.print("ZipException(OSAKA): " + e.toString());
+			} catch (IOException e) {
+				CommonUtil.print("IOException(OSAKA): " + e.toString());
+			}
 		
 		CommonUtil.print("-- over --");
 	}

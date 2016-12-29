@@ -39,7 +39,7 @@ public class TVGolfRetrieve {
 	public static String today;
 
 	private static void delete(String date) throws Exception {
-		List<ChannelProgram> cps = ChannelProgram.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
+		List<ChannelProgram> cps = GlobalSetting.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
 		Date dt = GlobalSetting.DB_DATETIME_FORMATTER4.parse(date);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(dt);
@@ -273,7 +273,7 @@ public class TVGolfRetrieve {
 				if (contents.length() > 66)
 					contents = contents.substring(0, 66);
 
-				List<ChannelProgram> cps = ChannelProgram.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
+				List<ChannelProgram> cps = GlobalSetting.onSetChannelname("ｺﾞﾙﾌﾈｯﾄﾜｰｸ");
 				for (ChannelProgram cp : cps) {
 					cp.program_time = program_time;
 					cp.title = title;

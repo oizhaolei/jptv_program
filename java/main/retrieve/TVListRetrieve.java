@@ -140,7 +140,7 @@ public class TVListRetrieve{
 				}
 			}
 		}
-		List<ChannelProgram> cps = ChannelProgram.onSetChannelname(channelName);
+		List<ChannelProgram> cps = GlobalSetting.onSetChannelname(channelName);
 		for (ChannelProgram cp : cps) {
 			cp.program_time = program_time;
 			cp.title = title;
