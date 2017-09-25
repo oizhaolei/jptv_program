@@ -1,6 +1,9 @@
 package util;
 
 import java.security.MessageDigest;
+import java.util.Date;
+
+import setting.GlobalSetting;
 
 public class CommonUtil {
 	public static String xmlFilter(String str) {
@@ -37,6 +40,7 @@ public class CommonUtil {
 		}
 	}
 	public static void print(String msg, Object... args) {
+		System.out.print(GlobalSetting.DB_DATETIME_FORMATTER10.format(new Date()) + " ");
 		System.out.println(String.format(msg, args));
 	}
 	public static String toMD5(byte[] source) {    	

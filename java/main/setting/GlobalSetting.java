@@ -18,7 +18,7 @@ public class GlobalSetting {
 	public static String insert_epg = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'epg', now(), 'epg', now())";
 	public static String existsCheck = "SELECT COUNT(0) FROM tbl_channel_program WHERE channelid=? AND program_time=?";
 	public static String delete = "DELETE FROM tbl_channel_program WHERE channelid=? AND program_time<? AND program_time>=?";
-	public static String deleteOldProgram = "DELETE FROM tbl_channel_program WHERE DATEDIFF(now(), program_time) >8";
+	public static String deleteOldProgram = "DELETE FROM tbl_channel_program WHERE DATEDIFF(now(), program_time)>15";
 	public static String selectProgram = "SELECT title, contents FROM tbl_channel_program WHERE channelid=? AND program_time=?";
 	public static String updateProgram = "UPDATE tbl_channel_program SET title=?, contents=? WHERE channelid=? AND program_time=?";
 	
@@ -31,6 +31,7 @@ public class GlobalSetting {
 	public final static DateFormat DB_DATETIME_FORMATTER7 = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ENGLISH);
 	public final static DateFormat DB_DATETIME_FORMATTER8 = new SimpleDateFormat("yyyyMMdd", Locale.CHINA);
 	public final static DateFormat DB_DATETIME_FORMATTER9 = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+	public final static DateFormat DB_DATETIME_FORMATTER10 = new SimpleDateFormat("yyyy-MM-dd HH:mm.ss.SSS", Locale.getDefault());
 
 	// [数据库里面的channelid, channelname, RSS的节目名称]关系映射表
 	public static String[][] channelMatrix = new String[][] {
@@ -141,7 +142,7 @@ public class GlobalSetting {
 			{ "104", "43.ｷｯｽﾞｽﾃｰｼｮﾝ", "ｷｯｽﾞｽﾃｰｼｮﾝ" }, // 120
 			{ "104", "43.ｷｯｽﾞｽﾃｰｼｮﾝ", "キッズステーション" },
 			{ "166", "44.ディズニーチャンネル", "ディズニーチャンネル" }, // 209
-			{ "165", "45.BSアニマクス", "ＢＳアニマックス}" }, // 208
+			{ "165", "45.BSアニマクス", "ＢＳアニマックス" }, // 208
 			{ "103", "46.ｺﾞﾙﾌﾈｯﾄﾜｰｸ", "ｺﾞﾙﾌﾈｯﾄﾜｰｸ" }, // 119
 			{ "103", "46.ｺﾞﾙﾌﾈｯﾄﾜｰｸ", "ゴルフネットＨＤ" },
 			{ "133", "47.J Sports 1", "J SPORTS 1" }, // 129
@@ -151,7 +152,7 @@ public class GlobalSetting {
 			{ "169", "49.J Sports 3", "Ｊ　ＳＰＯＲＴＳ　３" }, // 212
 			{ "170", "50.J Sports 4", "Ｊ　ＳＰＯＲＴＳ　４" }, // 213
 			{ "137", "51.Discovery", "ディスカバリー" }, // 133
-			{ "182", "52.ｸﾞﾘｰﾝﾁｬﾝﾈﾙ", "グリーンチャンネル" }  // 218
+			{ "184", "52.ｸﾞﾘｰﾝﾁｬﾝﾈﾙ", "グリーンチャンネル" }  // 218
 		};
 /*
  *

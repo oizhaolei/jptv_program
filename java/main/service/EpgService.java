@@ -31,7 +31,7 @@ import db.DBclass;
 public class EpgService {
 	private final static String md5Key = "a4b8c1x0y7z4";
 	private static String zipFilePath = "/root/epgdata";
-//	private static String zipFilePath = "C:/Work/logs";
+//	private static String zipFilePath = "D:/logs";
 	private static String channelJsonFile = "EnumService";
 	private static String programsJsonFile = "EnumServiceEvent";
 	private final static String TOKYO = "tky_";
@@ -172,7 +172,7 @@ public class EpgService {
 			getPrevProgramPS.close();
 			insertPS.close();
 
-			// 删除超过8天以上的数据
+			// 删除旧数据
 			deletePS = conn.prepareStatement(GlobalSetting.deleteOldProgram);
 			deletePS.execute();
 			deletePS.close();

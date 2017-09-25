@@ -171,10 +171,9 @@ public class SoNetTVProgramsRetrieve {
 			existsCheckPS.close();
 //			insertPS.executeBatch();
 
-			// 删除超过8天以上的数据
+			// 删除旧数据
 			conn.createStatement()
-					.execute(
-							"delete from tbl_channel_program where  DATEDIFF(now(), program_time) >8");
+					.execute(GlobalSetting.deleteOldProgram);
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
 		} finally {

@@ -93,6 +93,7 @@ public class ZipUtil {
 			}
 			input.close();
 			output.close();
+			zipFile.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -140,6 +141,7 @@ public class ZipUtil {
 			input.close();
 			output.close();
 		}
+		zipFile.close();
 	}
 
 }

@@ -46,7 +46,7 @@ public class ChannelListRetrieve {
 			getLatestProgramPS.close();
 			insertPS.executeBatch();
 
-			// 删除超过8天以上的数据
+			// 删除旧数据
 			deletePS = conn.prepareStatement(GlobalSetting.deleteOldProgram);
 			deletePS.execute();
 			deletePS.close();

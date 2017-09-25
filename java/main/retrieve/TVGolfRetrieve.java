@@ -85,8 +85,8 @@ public class TVGolfRetrieve {
 			existsCheckPS.close();
 //			insertPS.executeBatch();
 
-			// 删除超过8天以上的数据
-			conn.createStatement().execute("delete from tbl_channel_program where  DATEDIFF(now(), program_time) >8");
+			// 删除旧数据
+			conn.createStatement().execute(GlobalSetting.deleteOldProgram);
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
 		} finally {
@@ -115,7 +115,7 @@ public class TVGolfRetrieve {
 		for (int j = 1; j < dateNotes.size(); j++) {
 			Element el = dateNotes.get(j);
 			String temp = CommonUtil.xmlFilter(el.text());
-			if(temp.indexOf(str) > -1) {
+			if (temp.indexOf(str) > -1) {
 				column = j;
 				break;
 			}

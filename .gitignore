@@ -2,3 +2,5 @@
 target
 .settings
 .svn
+backup/
+cron/
