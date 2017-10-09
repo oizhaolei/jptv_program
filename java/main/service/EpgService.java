@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -47,12 +48,12 @@ public class EpgService {
 	private static PreparedStatement insertPS;
 	private static PreparedStatement deletePS;
 
-	private static void unzipFile(String filePre) throws ZipException, IOException {
+	private static void unzipFile(String filePre, Date date) throws ZipException, IOException {
         //加密后的字符串
-		String key = GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + md5Key;
+		String key = GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + md5Key;
 		String hash = CommonUtil.toMD5(key.getBytes("utf-8"));
-		String zipFile = zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "_" + hash + ".zip";
-		ZipUtil.decompressMultiFiles(zipFile, zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + File.separator);
+		String zipFile = zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "_" + hash + ".zip";
+		ZipUtil.decompressMultiFiles(zipFile, zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + File.separator);
 	}
 	private static String scanJsonFile(String fullName) {
 		Scanner scanner = null;
@@ -74,8 +75,8 @@ public class EpgService {
 		return buffer.toString();
 	}
 
-	private static void parseChannelJsonFile(String filePre) {
-		String buffer = scanJsonFile(zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "/" + channelJsonFile);
+	private static void parseChannelJsonFile(String filePre, Date date) {
+		String buffer = scanJsonFile(zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "/" + channelJsonFile);
 
 		try {
 			JSONArray channelsArray = new JSONObject(buffer).getJSONArray("Data");
@@ -92,8 +93,8 @@ public class EpgService {
 		}
 	}
 
-	private static void parseProgramJsonFile(String filePre) {
-		String buffer = scanJsonFile(zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(new Date()) + "/" + programsJsonFile);
+	private static void parseProgramJsonFile(String filePre, Date date) {
+		String buffer = scanJsonFile(zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "/" + programsJsonFile);
 
 		try {
 			JSONArray channelprogramArray = new JSONObject(buffer).getJSONObject("Data").getJSONArray("Epg");
@@ -152,8 +153,8 @@ public class EpgService {
 		}
 	}
 
-	private static void parseZipFile(String filePre) throws SQLException, NoSuchAlgorithmException, ZipException, IOException {
-		unzipFile(filePre);
+	private static void parseZipFile(String filePre, Date date) throws SQLException, NoSuchAlgorithmException, ZipException, IOException {
+		unzipFile(filePre, date);
 		try {
 			conn = DBclass.getConn();
 			selectPS = conn.prepareStatement(GlobalSetting.selectProgram);
@@ -162,9 +163,9 @@ public class EpgService {
 			getPrevProgramPS = conn.prepareStatement(GlobalSetting.getPrevProgram);
 			insertPS = conn.prepareStatement(GlobalSetting.insert_epg);
 
-			parseChannelJsonFile(filePre);
+			parseChannelJsonFile(filePre, date);
 
-			parseProgramJsonFile(filePre);
+			parseProgramJsonFile(filePre, date);
 
 			selectPS.close();
 			updatePS.close();
@@ -187,34 +188,44 @@ public class EpgService {
 
 	public static void main(String[] args) {
 		String pre;
+		Date date = new Date();
+
+		if (null != args && args.length > 0) {
 			try {
-				pre = TOKYO;
-				parseZipFile(pre);
-			} catch (NoSuchAlgorithmException e) {
-				CommonUtil.print("NoSuchAlgorithmException(TOKYO): " + e.toString());
-			} catch (UnsupportedEncodingException e) {
-				CommonUtil.print("UnsupportedEncodingException(TOKYO): " + e.toString());
-			} catch (SQLException e) {
-				CommonUtil.print("SQLException(TOKYO): " + e.toString());
-			} catch (ZipException e) {
-				CommonUtil.print("ZipException(TOKYO): " + e.toString());
-			} catch (IOException e) {
-				CommonUtil.print("IOException(TOKYO): " + e.toString());
+				date = GlobalSetting.DB_DATETIME_FORMATTER8.parse(args[0]);
+			} catch (ParseException e) {
+				date = new Date();
 			}
-			try {
-				pre = OSAKA;
-				parseZipFile(pre);
-			} catch (NoSuchAlgorithmException e) {
-				CommonUtil.print("NoSuchAlgorithmException(OSAKA): " + e.toString());
-			} catch (UnsupportedEncodingException e) {
-				CommonUtil.print("UnsupportedEncodingException(OSAKA): " + e.toString());
-			} catch (SQLException e) {
-				CommonUtil.print("SQLException(OSAKA): " + e.toString());
-			} catch (ZipException e) {
-				CommonUtil.print("ZipException(OSAKA): " + e.toString());
-			} catch (IOException e) {
-				CommonUtil.print("IOException(OSAKA): " + e.toString());
-			}
+		}
+
+		try {
+			pre = TOKYO;
+			parseZipFile(pre, date);
+		} catch (NoSuchAlgorithmException e) {
+			CommonUtil.print("NoSuchAlgorithmException(TOKYO): " + e.toString());
+		} catch (UnsupportedEncodingException e) {
+			CommonUtil.print("UnsupportedEncodingException(TOKYO): " + e.toString());
+		} catch (SQLException e) {
+			CommonUtil.print("SQLException(TOKYO): " + e.toString());
+		} catch (ZipException e) {
+			CommonUtil.print("ZipException(TOKYO): " + e.toString());
+		} catch (IOException e) {
+			CommonUtil.print("IOException(TOKYO): " + e.toString());
+		}
+		try {
+			pre = OSAKA;
+			parseZipFile(pre, date);
+		} catch (NoSuchAlgorithmException e) {
+			CommonUtil.print("NoSuchAlgorithmException(OSAKA): " + e.toString());
+		} catch (UnsupportedEncodingException e) {
+			CommonUtil.print("UnsupportedEncodingException(OSAKA): " + e.toString());
+		} catch (SQLException e) {
+			CommonUtil.print("SQLException(OSAKA): " + e.toString());
+		} catch (ZipException e) {
+			CommonUtil.print("ZipException(OSAKA): " + e.toString());
+		} catch (IOException e) {
+			CommonUtil.print("IOException(OSAKA): " + e.toString());
+		}
 		
 		CommonUtil.print("-- over --");
 	}
