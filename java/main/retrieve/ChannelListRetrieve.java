@@ -13,8 +13,9 @@ import util.CommonUtil;
 import db.DBclass;
 
 /**
- * @author zhaolei
- * 
+ * 插入间隔的整点时间，暂时不使用
+ * @author lenovo
+ *
  */
 public class ChannelListRetrieve {
 

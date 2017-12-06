@@ -1,6 +1,7 @@
 package util;
 
 import java.security.MessageDigest;
+import java.util.Calendar;
 import java.util.Date;
 
 import setting.GlobalSetting;
@@ -55,4 +56,20 @@ public class CommonUtil {
     		e.printStackTrace(); return null;
     	}  
     }
+
+	/**
+	 * 获得指定日期的间隔日期
+	 *
+	 * @param specifiedDay
+	 * @return
+	 */
+	public static Date getDateAfterSpecifiedDay(Date specifiedDay, int days) {
+		Calendar c = Calendar.getInstance();
+
+		c.setTime(specifiedDay);
+		int day = c.get(Calendar.DATE);
+		c.set(Calendar.DATE, day + days);
+
+		return c.getTime();
+	}
 }

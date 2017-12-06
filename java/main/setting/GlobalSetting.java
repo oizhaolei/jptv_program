@@ -32,6 +32,7 @@ public class GlobalSetting {
 	public final static DateFormat DB_DATETIME_FORMATTER8 = new SimpleDateFormat("yyyyMMdd", Locale.CHINA);
 	public final static DateFormat DB_DATETIME_FORMATTER9 = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
 	public final static DateFormat DB_DATETIME_FORMATTER10 = new SimpleDateFormat("yyyy-MM-dd HH:mm.ss.SSS", Locale.getDefault());
+	public final static DateFormat DB_DATETIME_FORMATTER11 = new SimpleDateFormat("yyyy年M月 d日（E）", Locale.ENGLISH);//12月 12日（星期二）
 
 	// [数据库里面的channelid, channelname, RSS的节目名称]关系映射表
 	public static String[][] channelMatrix = new String[][] {
@@ -135,23 +136,30 @@ public class GlobalSetting {
 			{ "183", "37.ｽﾀｰ・ﾁｬﾝﾈﾙ2", "スターチャンネル２" }, // 215
 			{ "179", "38.ｽﾀｰ・ﾁｬﾝﾈﾙ3", "スターチャンネル３" }, // 216
 			{ "167", "39.日本映画専門ch", "ＢＳ日本映画専門ｃｈ" }, // 210
-			{ "168", "40.時代劇専門ch", "時代劇専門ｃｈＨＤ" }, // 211
-			{ "182", "41.ムービープラス", "ムービープラスＨＤ" }, // 214
+			{ "168", "40.時代劇専門ch", "時代劇専門" }, // 211
+			{ "168", "40.時代劇専門ch", "時代劇専門ｃｈＨＤ" },
+			{ "182", "41.ムービープラス", "ムービープラス" }, // 214
+			{ "182", "41.ムービープラス", "ムービープラスＨＤ" },
 			{ "136", "42.衛星劇場", "衛星劇場" }, // 132
+			{ "136", "42.衛星劇場", "衛星劇場ＨＤ" },
 		// 6.BS/CS衛星放送
 			{ "104", "43.ｷｯｽﾞｽﾃｰｼｮﾝ", "ｷｯｽﾞｽﾃｰｼｮﾝ" }, // 120
 			{ "104", "43.ｷｯｽﾞｽﾃｰｼｮﾝ", "キッズステーション" },
 			{ "166", "44.ディズニーチャンネル", "ディズニーチャンネル" }, // 209
 			{ "165", "45.BSアニマクス", "ＢＳアニマックス" }, // 208
 			{ "103", "46.ｺﾞﾙﾌﾈｯﾄﾜｰｸ", "ｺﾞﾙﾌﾈｯﾄﾜｰｸ" }, // 119
+			{ "103", "46.ｺﾞﾙﾌﾈｯﾄﾜｰｸ", "ゴルフネットワーク" },
 			{ "103", "46.ｺﾞﾙﾌﾈｯﾄﾜｰｸ", "ゴルフネットＨＤ" },
 			{ "133", "47.J Sports 1", "J SPORTS 1" }, // 129
 			{ "133", "47.J Sports 1", "Ｊ　ＳＰＯＲＴＳ　１" },
 			{ "135", "48.J Sports 2", "J SPORTS 2" }, // 131
 			{ "135", "48.J Sports 2", "Ｊ　ＳＰＯＲＴＳ　２" },
-			{ "169", "49.J Sports 3", "Ｊ　ＳＰＯＲＴＳ　３" }, // 212
-			{ "170", "50.J Sports 4", "Ｊ　ＳＰＯＲＴＳ　４" }, // 213
+			{ "169", "49.J Sports 3", "J SPORTS 3" }, // 212
+			{ "169", "49.J Sports 3", "Ｊ　ＳＰＯＲＴＳ　３" },
+			{ "170", "50.J Sports 4", "J SPORTS 4" }, // 213
+			{ "170", "50.J Sports 4", "Ｊ　ＳＰＯＲＴＳ　４" },
 			{ "137", "51.Discovery", "ディスカバリー" }, // 133
+			{ "137", "51.Discovery", "ディスカバリーチャンネル" },
 			{ "184", "52.ｸﾞﾘｰﾝﾁｬﾝﾈﾙ", "グリーンチャンネル" }  // 218
 		};
 /*

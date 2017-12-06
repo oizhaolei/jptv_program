@@ -24,8 +24,8 @@ import com.mysql.jdbc.StringUtils;
 import db.DBclass;
 
 /**
- *
- * @author Administrator
+ * 获取Golf台的电视节目，已经不好用了，暂时不使用
+ * @author lenovo
  *
  */
 public class TVGolfRetrieve {
@@ -58,8 +58,7 @@ public class TVGolfRetrieve {
 	}
 
 	public static void help() {
-		CommonUtil.print("java -cp tvlist_gather.jar gather.TVGolfRetrieve");
-		CommonUtil.print("java -cp tvlist_gather.jar gather.TVGolfRetrieve");
+		CommonUtil.print("java -cp tvlist_gather.jar retrieve.TVGolfRetrieve");
 	}
 
 	/**
@@ -152,8 +151,6 @@ public class TVGolfRetrieve {
 				if (null != cells && cells.size() > 0) {
 					List<String[]> data = new ArrayList<String[]>();
 					for (int m = 0; m < 8; m++) {
-
-
 						if (rowspan_rest[m] > 1) {
 							rowspanlist.add(Integer.valueOf(0));
 							String[] program = { "", "" };
@@ -163,14 +160,14 @@ public class TVGolfRetrieve {
 
 						} else {
 							Element cell = cells.get(0);
-							Integer span = Integer
-									.valueOf(cell.attr("rowspan"));
+							Integer span = Integer.valueOf(1);
+							if (null != cell.attr("rowspan") && !("").equals(cell.attr("rowspan"))) {
+								span = Integer.valueOf(cell.attr("rowspan"));
+							}
 							rowspanlist.add(span);
 							String[] program = new String[2];
-							program[0] = CommonUtil.xmlFilter(cell.select("dt")
-									.text());
-							program[1] = CommonUtil.xmlFilter(cell.select("dd")
-									.text());
+							program[0] = CommonUtil.xmlFilter(cell.select("dt").text());
+							program[1] = CommonUtil.xmlFilter(cell.select("dd").text());
 							data.add(program);
 
 							cells.remove(0);

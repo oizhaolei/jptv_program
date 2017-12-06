@@ -6,9 +6,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import model.ChannelProgram;
 
@@ -24,6 +26,11 @@ import com.mysql.jdbc.StringUtils;
 
 import db.DBclass;
 
+/**
+ * 获取电视节目预告
+ * @author lenovo
+ *
+ */
 public class SoNetTVProgramsRetrieve {
 	static String url = "http://tv.so-net.ne.jp/chart/%s.action?head=%s&span=1&sticky=false&descriptive=true";
 
@@ -34,6 +41,13 @@ public class SoNetTVProgramsRetrieve {
 	static String bs2 = "http://tv.so-net.ne.jp/chart/bs2.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
 	static String bs3 = "http://tv.so-net.ne.jp/chart/bs3.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
 	static String bs4 = "http://tv.so-net.ne.jp/chart/bs4.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true";
+
+//	static String weixingjuchang = "http://tv.so-net.ne.jp/chart/cs/400628.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true"; // 衛星劇場
+	static String weixingjuchang = "http://tv.so-net.ne.jp/chart/cs110/500219.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true"; // 衛星劇場
+	static String shidaijuzhuanmen = "http://tv.so-net.ne.jp/chart/cs110/500292.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true"; // 時代劇専門 
+	static String movie_plus = "http://tv.so-net.ne.jp/chart/cs110/500240.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true"; // ムービープラス
+	static String golf_network = "http://tv.so-net.ne.jp/chart/cs110/500262.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true"; // ゴルフネットワーク
+	static String discovery = "http://tv.so-net.ne.jp/chart/cs110/500340.action?head=%s&span=24&sticky=false&cellHeight=5&descriptive=true"; // ディスカバリーチャンネル
 
 	static Connection conn;
 
@@ -77,23 +91,6 @@ public class SoNetTVProgramsRetrieve {
 		}
 	}
 
-
-	/**
-	 * 获得指定日期的间隔日期
-	 *
-	 * @param specifiedDay
-	 * @return
-	 */
-	public static Date getDateAfterSpecifiedDay(Date specifiedDay, int days) {
-		Calendar c = Calendar.getInstance();
-
-		c.setTime(specifiedDay);
-		int day = c.get(Calendar.DATE);
-		c.set(Calendar.DATE, day + days);
-
-		return c.getTime();
-	}
-
 	private static int getHeightByStyle(String css) {
 		int height = 0;
 		String px = parseCssStyle(css, "height");
@@ -119,8 +116,7 @@ public class SoNetTVProgramsRetrieve {
 	}
 
 	public static void help() {
-		CommonUtil.print("java -cp tvlist_gather.jar gather.SoNetTVProgramsRetrieve");
-		CommonUtil.print("java -cp tvlist_gather.jar gather.SoNetTVProgramsRetrieve");
+		CommonUtil.print("java -cp epg-service.jar retrieve.SoNetTVProgramsRetrieve");
 	}
 
 	/**
@@ -151,25 +147,32 @@ public class SoNetTVProgramsRetrieve {
 			}
 
 			for (int i = 0; i <= days; i++) {
-				Date program_date = getDateAfterSpecifiedDay(new Date(), i);
-				String timeStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date)
-						+ "0000";
+				Date program_date = CommonUtil.getDateAfterSpecifiedDay(new Date(), i);
+				String timeStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date) + "0000";
 				delete(GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date));
-				retrieveProgramByUrl(String.format(tokyo_chijo_url, timeStr),
-						program_date);
-				retrieveProgramByUrl(String.format(osaka_chijo_url, timeStr),
-						program_date);
-				retrieveProgramByUrl(String.format(kobe_chijo_url, timeStr),
-						program_date);
+				retrieveProgramByUrl(String.format(tokyo_chijo_url, timeStr), program_date);
+				retrieveProgramByUrl(String.format(osaka_chijo_url, timeStr), program_date);
+				retrieveProgramByUrl(String.format(kobe_chijo_url, timeStr), program_date);
 				retrieveProgramByUrl(String.format(bs1, timeStr), program_date);
 				retrieveProgramByUrl(String.format(bs2, timeStr), program_date);
 				retrieveProgramByUrl(String.format(bs3, timeStr), program_date);
 				retrieveProgramByUrl(String.format(bs4, timeStr), program_date);
 			}
 
-			deletePS.close();
+			Date program_date = new Date();
+			String timeStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date) + "0000";
+			retrieveProgramByUrl(String.format(weixingjuchang, timeStr), "衛星劇場");
+			retrieveProgramByUrl(String.format(shidaijuzhuanmen, timeStr), "時代劇専門");
+			retrieveProgramByUrl(String.format(movie_plus, timeStr), "ムービープラス");
+			retrieveProgramByUrl(String.format(golf_network, timeStr), "ゴルフネットワーク");
+			retrieveProgramByUrl(String.format(discovery, timeStr), "ディスカバリーチャンネル");
+
+			//insertPS.executeBatch();
 			existsCheckPS.close();
-//			insertPS.executeBatch();
+			getPrevProgramPS.close();
+			insertPS.close();
+			deletePS.close();
+
 
 			// 删除旧数据
 			conn.createStatement()
@@ -197,8 +200,7 @@ public class SoNetTVProgramsRetrieve {
 		return value;
 	}
 
-	private static void parseDoc(Document doc, Date program_date)
-			throws SQLException, ParseException {
+	private static void parseDoc(Document doc, Date program_date) throws SQLException, ParseException {
 		String channelName = null;
 		String title = null;
 		String contents = null;
@@ -272,7 +274,7 @@ public class SoNetTVProgramsRetrieve {
 								if (("td-minute").equals(el.attr("class"))) {
 									min = CommonUtil.xmlFilter(el.text()).trim();
 									program_time = GlobalSetting.DB_DATETIME_FORMATTER5
-											.format(getDateAfterSpecifiedDay(
+											.format(CommonUtil.getDateAfterSpecifiedDay(
 													program_date, -1))
 											+ " " + min;
 								} else if (("schedule-titleC").equals(el
@@ -355,8 +357,7 @@ public class SoNetTVProgramsRetrieve {
 			try {
 				doc = Jsoup
 						.connect(url)
-						.userAgent(
-								"Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0")
+						.userAgent("Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0")
 						.timeout(50000).get();
 			} catch (Exception e1) {
 				e1.printStackTrace(System.out);
@@ -374,4 +375,182 @@ public class SoNetTVProgramsRetrieve {
 		}
 	}
 
+	private static void parseDoc(Document doc, String channelName) throws SQLException, ParseException {
+		Date program_date = new Date(); //getDateAfterSpecifiedDay(new Date(), day);
+		String current_year = new SimpleDateFormat("yyyy年", Locale.getDefault()).format(new Date());
+		
+		String title = null;
+		String contents = null;
+		String program_time = null;
+		int program_hour = 0;
+		boolean timeFlg = true;
+		int sum = 0;
+		Elements charts = doc.getElementById("chartColumn").children();
+		int total_count = 0;
+		for (int i = 0; i < charts.size(); i++) {
+			Element div = charts.get(i);
+			String attr = div.attr("class");
+			if (("cell-date cell-top cell-station").equals(attr)) {
+				// 电视台
+				sum = 0;
+				//channelName = CommonUtil.xmlFilter(div.attr("title"));
+				String program_date_string = current_year + CommonUtil.xmlFilter(div.attr("title"));
+				program_date = CommonUtil.getDateAfterSpecifiedDay(GlobalSetting.DB_DATETIME_FORMATTER11.parse(program_date_string), 1);
+//				program_date = GlobalSetting.DB_DATETIME_FORMATTER11.parse(program_date_string);
+				title = null;
+				contents = null;
+				program_time = null;
+				program_hour = 0;
+
+			} else if (attr != null && attr.indexOf("cell-schedule") > -1
+					&& attr.indexOf("system-cell-schedule-head") > -1) {
+				// 节目
+				String style = div.attr("style");
+				int height = getHeightByStyle(style);
+				int top = getValueByCss(style, "top");
+
+				Elements detail = div.select("table").select("tr").select("td");
+				for (Element program : detail) {
+					if (("td-minute").equals(program.attr("class"))) {
+						// 节目时间
+						String min = CommonUtil.xmlFilter(program.text()).trim();
+						if (min.length() == 2) {
+							// if (!("00").equals(min)) {
+							// int h = sum / 297;
+							// if (h > program_hour) {
+							// program_hour = h;
+							// }
+							//
+							// } else {
+							// if (sum == 0) {
+							// program_hour = 0;
+							// } else if (sum > 0) {
+							// int h = sum / 297;
+							// int rest = sum % 297;
+							// if (rest > 0) {
+							// program_hour = h + 1;
+							// } else {
+							// program_hour = h;
+							// }
+							// }
+							//
+							// }
+
+							program_hour = getProgramHour(top);
+
+							String hour = program_hour > 9 ? ("" + program_hour)
+									: ("0" + program_hour);
+							program_time = GlobalSetting.DB_DATETIME_FORMATTER5
+									.format(program_date)
+									+ " "
+									+ hour
+									+ ":"
+									+ min;
+
+
+						} else if (min.length() > 2 && min.indexOf(":") > -1) {
+							Elements els = program.select("span");
+							for (Element el : els) {
+								if (("td-minute").equals(el.attr("class"))) {
+									min = CommonUtil.xmlFilter(el.text()).trim();
+									program_time = GlobalSetting.DB_DATETIME_FORMATTER5
+											.format(CommonUtil.getDateAfterSpecifiedDay(
+													program_date, -1))
+											+ " " + min;
+								} else if (("schedule-titleC").equals(el
+										.attr("class"))) {
+									// 节目标题
+									title = CommonUtil.xmlFilter(el.text());
+									if (title.length() > 16) {
+										title = title.substring(0, 16);
+									}
+
+									// 2016.02.07 contents的内容只存title
+									contents = CommonUtil.xmlFilter(el.text());
+									if (contents.length() > 66) {
+										contents = contents.substring(0, 66);
+									}
+								} else if (("schedule-summaryC").equals(el
+										.attr("class"))) {
+									// 节目简介
+//									contents = DBclass.xmlFilte(el.text());
+								}
+							}
+
+							sum = sum + height;
+						}
+
+					} else if (("td-schedule").equals(program.attr("class"))) {
+						// 节目内容
+						Elements els = program.select("span");
+						for (Element el : els) {
+							if (("schedule-title").equals(el.attr("class"))) {
+								// 节目标题
+								title = CommonUtil.xmlFilter(el.text());
+								if (title.length() > 16) {
+									title = title.substring(0, 16);
+								}
+
+								// 2016.02.07 contents的内容只存title
+								contents = CommonUtil.xmlFilter(el.text());
+								if (contents.length() > 66) {
+									contents = contents.substring(0, 66);
+								}
+							} else if (("schedule-summary").equals(el
+									.attr("class"))) {
+								// 节目简介
+//								contents = DBclass.xmlFilte(el.text());
+							}
+						}
+
+						sum = sum + height;
+					}
+				}
+
+				List<ChannelProgram> cps = GlobalSetting.onSetChannelname(channelName);
+				for (ChannelProgram cp : cps) {
+					cp.program_time = program_time;
+					cp.title = title;
+					cp.content = contents;
+					if (cp.channelid != -1 && timeFlg) {
+						CommonUtil.print("SoNetTVProgramsRetrieve-------------add:%s, %s, %s", cp.channelid,
+								cp.title, cp.program_time);
+						DBclass.addToDb(cp, getPrevProgramPS, insertPS,	existsCheckPS);
+						total_count ++;
+					} else {
+						CommonUtil.print("SoNetTVProgramsRetrieve-------------ignore:%s, %s, %s, %s", cp.channelid,
+								cp.title, cp.program_time, timeFlg);
+					}
+				}
+			}
+
+		}
+		CommonUtil.print("SoNetTVProgramsRetrieve-------------------total count : 【%d】", total_count);
+	}
+
+	private static void retrieveProgramByUrl(String url, String channel_name) throws IOException {
+
+		Document doc = null;
+		for (int i = 0; doc == null && i < 5; i++) {
+			CommonUtil.print("%d. retrieving %s", i + 1, url);
+			try {
+				doc = Jsoup
+						.connect(url)
+						.userAgent("Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0")
+						.timeout(50000).get();
+			} catch (Exception e1) {
+				e1.printStackTrace(System.out);
+			}
+		}
+
+		try {
+			parseDoc(doc, channel_name);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }

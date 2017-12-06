@@ -24,6 +24,11 @@ import com.mysql.jdbc.StringUtils;
 
 import db.DBclass;
 
+/**
+ * 获取大阪地上波的电视节目，暂时不使用
+ * @author lenovo
+ *
+ */
 public class TVOsakaGroupProgramsRetrieve {
 	static String url = "http://tv.so-net.ne.jp/chart/%s.action?head=%s&span=1&sticky=false&descriptive=true";
 

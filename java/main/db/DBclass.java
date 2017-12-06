@@ -18,7 +18,8 @@ public class DBclass {
 	static Properties env = new Properties();
 
 	public static Connection getConn() throws Exception {
-		InputStream input = DBclass.class.getClassLoader().getResourceAsStream("env.properties");
+//		InputStream input = DBclass.class.getClassLoader().getResourceAsStream("env.properties");
+		InputStream input = DBclass.class.getClassLoader().getResourceAsStream("env.epg2.properties");
 		env.load(input);
 		Class.forName(env.getProperty("jdbc.driverClassName"));
 		Connection c = DriverManager.getConnection(env.getProperty("jdbc.url"), env.getProperty("jdbc.username"),

@@ -22,12 +22,12 @@ import util.CommonUtil;
 import db.DBclass;
 
 /**
- * 
+ * 获取Kids频道的节目预告
  * @author Administrator
  * 
  */
 public class TVKidsRetrieve {
-	static String url = "http://www.kids-station.com/tv/program/daily.aspx?day=%s";
+	static String url_format = "http://www.kids-station.com/tv/program/daily.aspx?day=%s";
 
 	static Connection conn;
 	static PreparedStatement existsCheckPS;
@@ -43,26 +43,37 @@ public class TVKidsRetrieve {
 	public static void main(String[] args) throws Exception {
 		try {
 			CommonUtil.print("now: %s", DateFormat.getDateTimeInstance().format(new Date()));
-			// args = new String[]{"20120709"};
-			String dateStr;
-			if (args.length > 0)
-				dateStr = args[0];
-			else
-				dateStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(new Date());
+			//args = new String[] { "2" };
+			int days = 0;
 
-			url = String.format(url, dateStr);
+			if (args.length > 0) {
+				days = Integer.valueOf(args[0]);
+			} else {
+				days = 0;
+			}
 
 			conn = DBclass.getConn();
-			existsCheckPS = conn
-					.prepareStatement("select count(0) from tbl_channel_program where channelid=? and program_time=?");
-			getPrevProgramPS = conn
-					.prepareStatement("select max(program_time) from tbl_channel_program where channelid=? and program_time<?");
+
+
+
+			existsCheckPS = conn.prepareStatement("select count(0) from tbl_channel_program where channelid=? and program_time=?");
+			getPrevProgramPS = conn.prepareStatement("select max(program_time) from tbl_channel_program where channelid=? and program_time<?");
 			insertPS = conn.prepareStatement("insert into tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'kids', now(), 'kids', now())");
 			deletePS = conn.prepareStatement(GlobalSetting.delete);
-			delete(dateStr);
-			// retrieve
-			retrieveKids(url, dateStr);
 
+			String dateStr;
+			for (int i = 0; i <= days; i++) {
+				Date program_date = CommonUtil.getDateAfterSpecifiedDay(new Date(), i);
+				dateStr = GlobalSetting.DB_DATETIME_FORMATTER4.format(program_date);
+				String url = String.format(url_format, dateStr);
+				delete(dateStr);
+				// retrieve
+				retrieveKids(url, dateStr);
+			}
+
+			deletePS.close();
+			getPrevProgramPS.close();
+			insertPS.close();
 			existsCheckPS.close();
 //			insertPS.executeBatch();
 
@@ -92,11 +103,11 @@ public class TVKidsRetrieve {
 			deletePS.setInt(1, cp.channelid);
 			deletePS.setString(2, date1);
 			deletePS.setString(3, date2);
-			System.out.println(String.format("%s, %s, %s", GlobalSetting.delete, date1, date2));
+			System.out.println(String.format("%s, %s, %s, %s", GlobalSetting.delete, cp.channelid, date1, date2));
 
 			deletePS.executeUpdate();
 		}
-		deletePS.close();
+		
 	}
 
 	// 地上波
@@ -176,8 +187,7 @@ public class TVKidsRetrieve {
 	}
 
 	public static void help() {
-		CommonUtil.print("java -cp tvlist_gather.jar gather.TVKidsRetrieve");
-		CommonUtil.print("java -cp tvlist_gather.jar gather.TVKidsRetrieve");
+		CommonUtil.print("java -cp epg-service.jar retrieve.TVKidsRetrieve");
 	}
 
 }

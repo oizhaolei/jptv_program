@@ -21,12 +21,11 @@ import util.CommonUtil;
 import db.DBclass;
 
 /**
- * 把http://tv.yahoo.co.jp/listings/realtime/内容保存到本地
- * 
- * @author zhaolei
- * 
+ * 获取当前的电视节目，暂时不使用
+ * @author lenovo
+ *
  */
-public class TVListRetrieve{
+public class CurrentTVProgramRetrieve{
 	static String tokyo_chijo_url = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=23";
 	static String osaka_chijo_url = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=40";
 	static String kobe_chijo_url = "http://tv.so-net.ne.jp/rss/schedulesByCurrentTime.action?group=10&stationAreaId=42";
