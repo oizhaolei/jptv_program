@@ -15,12 +15,13 @@ public class GlobalSetting {
 	public static String insert_sonet = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) VALUES (?, ?, ?, ?, 'sonet', now(), 'sonet', now())";
 	public static String insert_golf = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) VALUES (?, ?, ?, ?, 'golf', now(), 'golf', now())";
 	public static String insert_kids = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'kids', now(), 'kids', now())";
-	public static String insert_epg = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'epg', now(), 'epg', now())";
+	public static String insert_epg = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date, program_start_time, program_end_time) values (?, ?, ?, ?, 'epg', now(), 'epg', now(), ?, ?)";
+	//public static String insert_epg_split = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date, program_start_time, program_end_time) values (?, ?, ?, ?, 'epg', now(), 'epg', now(), NULL, NULL)";
 	public static String existsCheck = "SELECT COUNT(0) FROM tbl_channel_program WHERE channelid=? AND program_time=?";
 	public static String delete = "DELETE FROM tbl_channel_program WHERE channelid=? AND program_time<? AND program_time>=?";
 	public static String deleteOldProgram = "DELETE FROM tbl_channel_program WHERE DATEDIFF(now(), program_time)>15";
 	public static String selectProgram = "SELECT title, contents FROM tbl_channel_program WHERE channelid=? AND program_time=?";
-	public static String updateProgram = "UPDATE tbl_channel_program SET title=?, contents=? WHERE channelid=? AND program_time=?";
+	public static String updateProgram = "UPDATE tbl_channel_program SET title=?, contents=?, program_start_time=?, program_end_time=? WHERE channelid=? AND program_time=?";
 	
 	public final static DateFormat DB_DATETIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.JAPAN);
 	public final static DateFormat DB_DATETIME_FORMATTER2 = new SimpleDateFormat("yyyy-MM-dd HH", Locale.JAPAN);

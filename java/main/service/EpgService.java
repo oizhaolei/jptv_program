@@ -32,7 +32,7 @@ import db.DBclass;
 public class EpgService {
 	private final static String md5Key = "a4b8c1x0y7z4";
 	private static String zipFilePath = "/root/epgdata";
-//	private static String zipFilePath = "D:/logs";
+//	private static String zipFilePath = "D:/logs/epgdata";
 	private static String channelJsonFile = "EnumService";
 	private static String programsJsonFile = "EnumServiceEvent";
 	private final static String TOKYO = "tky_";
@@ -140,10 +140,15 @@ public class EpgService {
 		}
 		String channelName = channel.service_name;
 		List<ChannelProgram> cps = GlobalSetting.onSetChannelname(channelName);
+		if (("ＮＨＫＢＳ１").equals(channelName) && !("101").equals(channel.sid)) {
+			return;
+		}
 		for (ChannelProgram cp : cps) {
 			cp.program_time = GlobalSetting.DB_DATETIME_FORMATTER.format(new Date(program.starttime + 3600000));
 			cp.title = program.title;
 			cp.content = program.content;
+			cp.program_start_time = GlobalSetting.DB_DATETIME_FORMATTER.format(new Date(program.starttime + 3600000));
+			cp.program_end_time = GlobalSetting.DB_DATETIME_FORMATTER.format(new Date(program.endtime + 3600000));
 			if (cp.channelid != -1) {
 //				DBclass.addToDb(cp, getPrevProgramPS, insertPS, existsCheckPS);
 				DBclass.addToDb(cp, getPrevProgramPS, insertPS, updatePS, selectPS);

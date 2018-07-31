@@ -18,8 +18,8 @@ public class DBclass {
 	static Properties env = new Properties();
 
 	public static Connection getConn() throws Exception {
-//		InputStream input = DBclass.class.getClassLoader().getResourceAsStream("env.properties");
-		InputStream input = DBclass.class.getClassLoader().getResourceAsStream("env.epg2.properties");
+		InputStream input = DBclass.class.getClassLoader().getResourceAsStream("env.properties");
+//		InputStream input = DBclass.class.getClassLoader().getResourceAsStream("env.epg2.properties");
 		env.load(input);
 		Class.forName(env.getProperty("jdbc.driverClassName"));
 		Connection c = DriverManager.getConnection(env.getProperty("jdbc.url"), env.getProperty("jdbc.username"),
@@ -65,11 +65,14 @@ public class DBclass {
 		ChannelProgram cp_db = getChannelProgram(cp, selectPS);
 		if (!isSameProgram(cp_db, cp)) {
 			if (cp.channelid == cp_db.channelid && cp.program_time.equals(cp_db.program_time)) {
-				CommonUtil.print("update:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+				CommonUtil.print("update:%s, %s, %s, %s, %s", cp.channelid, cp.title, cp.program_time, cp.program_start_time, cp.program_end_time);
 				updatePS.setString(1, cp.title);
 				updatePS.setString(2, cp.content);
-				updatePS.setInt(3, cp.channelid);
-				updatePS.setString(4, cp.program_time);
+				updatePS.setString(3, cp.program_start_time);
+				updatePS.setString(4, cp.program_end_time);
+				updatePS.setInt(5, cp.channelid);
+				updatePS.setString(6, cp.program_time);
+
 				updatePS.execute();
 			} else {
 				try {
@@ -78,11 +81,13 @@ public class DBclass {
 					e.printStackTrace(System.out);
 				}
 
-				CommonUtil.print("add:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+				CommonUtil.print("add:%s, %s, %s, %s, %s", cp.channelid, cp.title, cp.program_time, cp.program_start_time, cp.program_end_time);
 				insertPS.setInt(1, cp.channelid);
 				insertPS.setString(2, cp.title);
 				insertPS.setString(3, cp.content);
 				insertPS.setString(4, cp.program_time);
+				insertPS.setString(5, cp.program_start_time);
+				insertPS.setString(6, cp.program_end_time);
 
 				insertPS.addBatch();
 				insertPS.executeBatch();
@@ -119,6 +124,8 @@ public class DBclass {
 				insertPS.setString(2, "");
 				insertPS.setString(3, "");
 				insertPS.setString(4, GlobalSetting.DB_DATETIME_FORMATTER.format(split[i]));
+				insertPS.setString(5, null);
+				insertPS.setString(6, null);
 
 				insertPS.addBatch();
 			}
