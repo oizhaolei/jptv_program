@@ -65,7 +65,7 @@ public class DBclass {
 		ChannelProgram cp_db = getChannelProgram(cp, selectPS);
 		if (!isSameProgram(cp_db, cp)) {
 			if (cp.channelid == cp_db.channelid && cp.program_time.equals(cp_db.program_time)) {
-				CommonUtil.print("update:%s, %s, %s, %s, %s", cp.channelid, cp.title, cp.program_time, cp.program_start_time, cp.program_end_time);
+				CommonUtil.print("update:%s (%s), %s, %s, %s, %s", cp.channelid, cp.channelname, cp.title, cp.program_time, cp.program_start_time, cp.program_end_time);
 				updatePS.setString(1, cp.title);
 				updatePS.setString(2, cp.content);
 				updatePS.setString(3, cp.program_start_time);
@@ -81,7 +81,7 @@ public class DBclass {
 					e.printStackTrace(System.out);
 				}
 
-				CommonUtil.print("add:%s, %s, %s, %s, %s", cp.channelid, cp.title, cp.program_time, cp.program_start_time, cp.program_end_time);
+				CommonUtil.print("add:%s (%s), %s, %s, %s, %s", cp.channelid, cp.channelname, cp.title, cp.program_time, cp.program_start_time, cp.program_end_time);
 				insertPS.setInt(1, cp.channelid);
 				insertPS.setString(2, cp.title);
 				insertPS.setString(3, cp.content);

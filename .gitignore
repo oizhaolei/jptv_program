@@ -4,3 +4,5 @@ target
 .svn
 backup/
 cron/
+java/main/env.properties
+java/main/env.epg2.properties

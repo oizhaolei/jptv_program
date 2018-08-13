@@ -31,7 +31,7 @@ import db.DBclass;
 
 public class EpgService {
 	private final static String md5Key = "a4b8c1x0y7z4";
-	private static String zipFilePath = "/root/epgdata";
+	 private static String zipFilePath = "/root/epgdata";
 //	private static String zipFilePath = "D:/logs/epgdata";
 	private static String channelJsonFile = "EnumService";
 	private static String programsJsonFile = "EnumServiceEvent";
@@ -48,18 +48,24 @@ public class EpgService {
 	private static PreparedStatement insertPS;
 	private static PreparedStatement deletePS;
 
-	private static void unzipFile(String filePre, Date date) throws ZipException, IOException {
-        //加密后的字符串
+	private static void unzipFile(String filePre, Date date)
+			throws ZipException, IOException {
+		// 加密后的字符串
 		String key = GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + md5Key;
 		String hash = CommonUtil.toMD5(key.getBytes("utf-8"));
-		String zipFile = zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "_" + hash + ".zip";
-		ZipUtil.decompressMultiFiles(zipFile, zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + File.separator);
+		String zipFile = zipFilePath + File.separator + filePre
+				+ GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "_"
+				+ hash + ".zip";
+		ZipUtil.decompressMultiFiles(zipFile, zipFilePath + File.separator
+				+ filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date)
+				+ File.separator);
 	}
+
 	private static String scanJsonFile(String fullName) {
 		Scanner scanner = null;
 		StringBuilder buffer = new StringBuilder();
 		File file = new File(fullName);
-		
+
 		try {
 			scanner = new Scanner(file, "utf-8");
 			while (scanner.hasNextLine()) {
@@ -76,16 +82,20 @@ public class EpgService {
 	}
 
 	private static void parseChannelJsonFile(String filePre, Date date) {
-		String buffer = scanJsonFile(zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "/" + channelJsonFile);
+		String buffer = scanJsonFile(zipFilePath + File.separator + filePre
+				+ GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "/"
+				+ channelJsonFile);
 
 		try {
-			JSONArray channelsArray = new JSONObject(buffer).getJSONArray("Data");
-			for (int i = 0; i < channelsArray.length(); i ++) {
+			JSONArray channelsArray = new JSONObject(buffer)
+					.getJSONArray("Data");
+			for (int i = 0; i < channelsArray.length(); i++) {
 				JSONObject channelObject = channelsArray.getJSONObject(i);
 				JsonChannel channel = new JsonChannel(channelObject);
 				if (GlobalSetting.isAvailiable(channel.service_name)) {
 					channelMap.put(channel.key, channel);
-					//System.out.println("{key:" + channel.key + ", name:" + channel.service_name + "}");
+					// System.out.println("{key:" + channel.key + ", name:" +
+					// channel.service_name + "}");
 				}
 			}
 		} catch (JSONException e) {
@@ -94,15 +104,20 @@ public class EpgService {
 	}
 
 	private static void parseProgramJsonFile(String filePre, Date date) {
-		String buffer = scanJsonFile(zipFilePath + File.separator + filePre + GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "/" + programsJsonFile);
+		String buffer = scanJsonFile(zipFilePath + File.separator + filePre
+				+ GlobalSetting.DB_DATETIME_FORMATTER8.format(date) + "/"
+				+ programsJsonFile);
 
 		try {
-			JSONArray channelprogramArray = new JSONObject(buffer).getJSONObject("Data").getJSONArray("Epg");
-			for (int i = 0; i < channelprogramArray.length(); i ++) {
-				JSONObject channelprogramObject = channelprogramArray.getJSONObject(i);
+			JSONArray channelprogramArray = new JSONObject(buffer)
+					.getJSONObject("Data").getJSONArray("Epg");
+			for (int i = 0; i < channelprogramArray.length(); i++) {
+				JSONObject channelprogramObject = channelprogramArray
+						.getJSONObject(i);
 				String channnel_key = channelprogramObject.getString("Key");
-				JSONArray programArray = channelprogramObject.getJSONArray("Value");
-				for (int j = 0; j < programArray.length(); j ++) {
+				JSONArray programArray = channelprogramObject
+						.getJSONArray("Value");
+				for (int j = 0; j < programArray.length(); j++) {
 					JSONObject programObject = programArray.getJSONObject(j);
 					JsonProgram program = new JsonProgram();
 					program.channel_key = channnel_key;
@@ -110,11 +125,14 @@ public class EpgService {
 					program.starttime = programObject.getLong("Start");
 					program.endtime = programObject.getLong("End");
 					try {
-						JSONObject shortInfo = programObject.getJSONObject("Short");
+						JSONObject shortInfo = programObject
+								.getJSONObject("Short");
 						program.title = shortInfo.getString("EventName");
 						program.content = shortInfo.getString("Text");
 					} catch (Exception e1) {
-						CommonUtil.print("program short is empty , {channal_key: %s, key: %s}", channnel_key, program.key);
+						CommonUtil
+								.print("program short is empty , {channal_key: %s, key: %s}",
+										channnel_key, program.key);
 					}
 					if (program.isEmpty()) {
 						continue;
@@ -126,7 +144,7 @@ public class EpgService {
 						e.printStackTrace(System.out);
 					}
 				}
-				
+
 			}
 		} catch (JSONException e) {
 			e.printStackTrace(System.out);
@@ -144,28 +162,37 @@ public class EpgService {
 			return;
 		}
 		for (ChannelProgram cp : cps) {
-			cp.program_time = GlobalSetting.DB_DATETIME_FORMATTER.format(new Date(program.starttime + 3600000));
+			cp.program_time = GlobalSetting.DB_DATETIME_FORMATTER
+					.format(new Date(program.starttime + 3600000));
 			cp.title = program.title;
 			cp.content = program.content;
-			cp.program_start_time = GlobalSetting.DB_DATETIME_FORMATTER.format(new Date(program.starttime + 3600000));
-			cp.program_end_time = GlobalSetting.DB_DATETIME_FORMATTER.format(new Date(program.endtime + 3600000));
+			cp.program_start_time = GlobalSetting.DB_DATETIME_FORMATTER
+					.format(new Date(program.starttime + 3600000));
+			cp.program_end_time = GlobalSetting.DB_DATETIME_FORMATTER
+					.format(new Date(program.endtime + 3600000));
 			if (cp.channelid != -1) {
-//				DBclass.addToDb(cp, getPrevProgramPS, insertPS, existsCheckPS);
-				DBclass.addToDb(cp, getPrevProgramPS, insertPS, updatePS, selectPS);
+				// DBclass.addToDb(cp, getPrevProgramPS, insertPS,
+				// existsCheckPS);
+				DBclass.addToDb(cp, getPrevProgramPS, insertPS, updatePS,
+						selectPS);
 			} else {
-				CommonUtil.print("ignore:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+				CommonUtil.print("ignore:%s, %s, %s", cp.channelid, cp.title,
+						cp.program_time);
 			}
 		}
 	}
 
-	private static void parseZipFile(String filePre, Date date) throws SQLException, NoSuchAlgorithmException, ZipException, IOException {
+	private static void parseZipFile(String filePre, Date date)
+			throws SQLException, NoSuchAlgorithmException, ZipException,
+			IOException {
 		unzipFile(filePre, date);
 		try {
 			conn = DBclass.getConn();
 			selectPS = conn.prepareStatement(GlobalSetting.selectProgram);
 			updatePS = conn.prepareStatement(GlobalSetting.updateProgram);
 			existsCheckPS = conn.prepareStatement(GlobalSetting.existsCheck);
-			getPrevProgramPS = conn.prepareStatement(GlobalSetting.getPrevProgram);
+			getPrevProgramPS = conn
+					.prepareStatement(GlobalSetting.getPrevProgram);
 			insertPS = conn.prepareStatement(GlobalSetting.insert_epg);
 
 			parseChannelJsonFile(filePre, date);
@@ -207,9 +234,11 @@ public class EpgService {
 			pre = TOKYO;
 			parseZipFile(pre, date);
 		} catch (NoSuchAlgorithmException e) {
-			CommonUtil.print("NoSuchAlgorithmException(TOKYO): " + e.toString());
+			CommonUtil
+					.print("NoSuchAlgorithmException(TOKYO): " + e.toString());
 		} catch (UnsupportedEncodingException e) {
-			CommonUtil.print("UnsupportedEncodingException(TOKYO): " + e.toString());
+			CommonUtil.print("UnsupportedEncodingException(TOKYO): "
+					+ e.toString());
 		} catch (SQLException e) {
 			CommonUtil.print("SQLException(TOKYO): " + e.toString());
 		} catch (ZipException e) {
@@ -221,9 +250,11 @@ public class EpgService {
 			pre = OSAKA;
 			parseZipFile(pre, date);
 		} catch (NoSuchAlgorithmException e) {
-			CommonUtil.print("NoSuchAlgorithmException(OSAKA): " + e.toString());
+			CommonUtil
+					.print("NoSuchAlgorithmException(OSAKA): " + e.toString());
 		} catch (UnsupportedEncodingException e) {
-			CommonUtil.print("UnsupportedEncodingException(OSAKA): " + e.toString());
+			CommonUtil.print("UnsupportedEncodingException(OSAKA): "
+					+ e.toString());
 		} catch (SQLException e) {
 			CommonUtil.print("SQLException(OSAKA): " + e.toString());
 		} catch (ZipException e) {
@@ -231,7 +262,7 @@ public class EpgService {
 		} catch (IOException e) {
 			CommonUtil.print("IOException(OSAKA): " + e.toString());
 		}
-		
+
 		CommonUtil.print("-- over --");
 	}
 }
