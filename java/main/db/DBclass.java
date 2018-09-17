@@ -59,6 +59,32 @@ public class DBclass {
 		}
 	}
 
+	public static void addToDbWithProgramEndTime(ChannelProgram cp, PreparedStatement prevProgramPS, PreparedStatement insertPS,
+			PreparedStatement existsCheckPS) throws SQLException {
+		trim(cp);
+		if (!exists(cp, existsCheckPS)) {
+			try {
+				addSplit(cp.channelid, cp.program_time, prevProgramPS, insertPS);
+			} catch (ParseException e) {
+				e.printStackTrace(System.out);
+			}
+
+			CommonUtil.print("add:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+
+			insertPS.setInt(1, cp.channelid);
+			insertPS.setString(2, cp.title);
+			insertPS.setString(3, cp.content);
+			insertPS.setString(4, cp.program_time);
+			insertPS.setString(5, null);
+			insertPS.setString(6, null);
+
+			insertPS.addBatch();
+			insertPS.executeBatch();
+		} else {
+			CommonUtil.print("ignore:%s, %s, %s", cp.channelid, cp.title, cp.program_time);
+		}
+	}
+
 	public static void addToDb(ChannelProgram cp, PreparedStatement prevProgramPS, PreparedStatement insertPS,
 			PreparedStatement updatePS, PreparedStatement selectPS) throws SQLException {
 		trim(cp);

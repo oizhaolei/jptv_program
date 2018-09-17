@@ -16,6 +16,7 @@ public class GlobalSetting {
 	public static String insert_golf = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) VALUES (?, ?, ?, ?, 'golf', now(), 'golf', now())";
 	public static String insert_kids = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date) values (?, ?, ?, ?, 'kids', now(), 'kids', now())";
 	public static String insert_epg = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date, program_start_time, program_end_time) values (?, ?, ?, ?, 'epg', now(), 'epg', now(), ?, ?)";
+	public static String insert_suntv = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date, program_start_time, program_end_time) VALUES (?, ?, ?, ?, 'suntv', now(), 'suntv', now(), ?, ?)";
 	//public static String insert_epg_split = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date, program_start_time, program_end_time) values (?, ?, ?, ?, 'epg', now(), 'epg', now(), NULL, NULL)";
 	public static String existsCheck = "SELECT COUNT(0) FROM tbl_channel_program WHERE channelid=? AND program_time=?";
 	public static String delete = "DELETE FROM tbl_channel_program WHERE channelid=? AND program_time<? AND program_time>=?";
@@ -33,7 +34,9 @@ public class GlobalSetting {
 	public final static DateFormat DB_DATETIME_FORMATTER8 = new SimpleDateFormat("yyyyMMdd", Locale.CHINA);
 	public final static DateFormat DB_DATETIME_FORMATTER9 = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
 	public final static DateFormat DB_DATETIME_FORMATTER10 = new SimpleDateFormat("yyyy-MM-dd HH:mm.ss.SSS", Locale.getDefault());
-	public final static DateFormat DB_DATETIME_FORMATTER11 = new SimpleDateFormat("yyyy年M月 d日（E）", Locale.ENGLISH);//12月 12日（星期二）
+	public final static DateFormat DB_DATETIME_FORMATTER11 = new SimpleDateFormat("yyyy年M月 d日（E）", Locale.ENGLISH);//2018年9月 10日（星期一）
+	public final static DateFormat DB_DATETIME_FORMATTER12 = new SimpleDateFormat("yyyy年M月d日(E)", Locale.JAPAN);//2018年9月 17日（月）
+	public final static DateFormat DB_DATETIME_FORMATTER13 = new SimpleDateFormat("yyyy年M月d日", Locale.JAPAN);//2018年9月 17日
 
 	// [数据库里面的channelid, channelname, RSS的节目名称]关系映射表
 	public static String[][] channelMatrix = new String[][] {
