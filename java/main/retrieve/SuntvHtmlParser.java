@@ -40,7 +40,7 @@ public class SuntvHtmlParser {
 	static PreparedStatement existsCheckPS;
 	static PreparedStatement getPrevProgramPS;
 	static PreparedStatement insertPS;
-	static PreparedStatement deletePS;
+//	static PreparedStatement deletePS;
 
 	public static Date date;
 
@@ -61,12 +61,12 @@ public class SuntvHtmlParser {
 					+ date1.substring(6, 8) + " " + "00:00";
 			String date2 = date.substring(0, 4) + "-" + date.substring(4, 6)
 					+ "-" + date.substring(6, 8) + " " + "00:00";
-			for (ChannelProgram cp : cps) {
-				deletePS.setInt(1, cp.channelid);
-				deletePS.setString(2, date1);
-				deletePS.setString(3, date2);
-				deletePS.executeUpdate();
-			}
+//			for (ChannelProgram cp : cps) {
+//				deletePS.setInt(1, cp.channelid);
+//				deletePS.setString(2, date1);
+//				deletePS.setString(3, date2);
+//				deletePS.executeUpdate();
+//			}
 		}
 	}
 
@@ -90,7 +90,7 @@ public class SuntvHtmlParser {
 			getPrevProgramPS = conn
 					.prepareStatement(GlobalSetting.getPrevProgram);
 			insertPS = conn.prepareStatement(GlobalSetting.insert_suntv);
-			deletePS = conn.prepareStatement(GlobalSetting.delete);
+//			deletePS = conn.prepareStatement(GlobalSetting.delete);
 			// retrieve
 			delete(GlobalSetting.DB_DATETIME_FORMATTER4.format(new Date()));
 			retrieveProgramByUrl(SUNTV_WEEKLY_URL, CHANNEL);
@@ -101,7 +101,7 @@ public class SuntvHtmlParser {
 			existsCheckPS.close();
 			getPrevProgramPS.close();
 			insertPS.close();
-			deletePS.close();
+//			deletePS.close();
 
 			// 删除旧数据
 			conn.createStatement().execute(GlobalSetting.deleteOldProgram);
