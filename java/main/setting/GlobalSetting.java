@@ -20,7 +20,7 @@ public class GlobalSetting {
 	//public static String insert_epg_split = "INSERT INTO tbl_channel_program (channelid, title, contents, program_time, create_id, create_date, update_id, update_date, program_start_time, program_end_time) values (?, ?, ?, ?, 'epg', now(), 'epg', now(), NULL, NULL)";
 	public static String existsCheck = "SELECT COUNT(0) FROM tbl_channel_program WHERE channelid=? AND program_time=?";
 	public static String delete = "DELETE FROM tbl_channel_program WHERE channelid=? AND program_time<? AND program_time>=?";
-	public static String deleteOldProgram = "DELETE FROM tbl_channel_program WHERE DATEDIFF(now(), program_time)>15";
+	public static String deleteOldProgram = "DELETE FROM tbl_channel_program WHERE DATEDIFF(now(), program_time)>30";
 	public static String selectProgram = "SELECT title, contents FROM tbl_channel_program WHERE channelid=? AND program_time=?";
 	public static String updateProgram = "UPDATE tbl_channel_program SET title=?, contents=?, program_start_time=?, program_end_time=? WHERE channelid=? AND program_time=?";
 	
@@ -127,6 +127,7 @@ public class GlobalSetting {
 			{ "99", "29.BSフジ・181", "ＢＳフジ・１８１" },
 			{ "100", "30.BSジャパン", "ＢＳジャパン(Ch.7)" }, // 116
 			{ "100", "30.BSジャパン", "ＢＳジャパン" },
+			{ "100", "30.BSジャパン", "ＢＳテレ東" },
 			{ "180", "31.BS12トゥエルビ", "ＢＳ１２トゥエルビ" }, // 217
 			{ "185", "32.BSスカパー！", "ＢＳスカパー！" }, // 219
 		// 5.映画ドラマ
@@ -152,6 +153,7 @@ public class GlobalSetting {
 			{ "104", "43.ｷｯｽﾞｽﾃｰｼｮﾝ", "ｷｯｽﾞｽﾃｰｼｮﾝ" }, // 120
 			{ "104", "43.ｷｯｽﾞｽﾃｰｼｮﾝ", "キッズステーション" },
 			{ "166", "44.ディズニーチャンネル", "ディズニーチャンネル" }, // 209
+			{ "166", "44.ディズニーチャンネル", "ディズニーｃｈ" },
 			{ "165", "45.BSアニマクス", "ＢＳアニマックス" }, // 208
 			{ "103", "46.ｺﾞﾙﾌﾈｯﾄﾜｰｸ", "ｺﾞﾙﾌﾈｯﾄﾜｰｸ" }, // 119
 			{ "103", "46.ｺﾞﾙﾌﾈｯﾄﾜｰｸ", "ゴルフネットワーク" },
@@ -234,7 +236,7 @@ public class GlobalSetting {
 		"ＢＳ朝日１",
 		"ＢＳ－ＴＢＳ",
 		"ＢＳフジ・１８１",
-		"ＢＳジャパン",
+		"ＢＳテレ東",
 		"ＢＳ１２トゥエルビ",
 		"ＢＳスカパー！",
 		"ＢＳアニマックス",
@@ -245,7 +247,7 @@ public class GlobalSetting {
 		"スターチャンネル２",
 		"スターチャンネル３",
 		"日本映画専門ｃｈ",
-		"ディズニーチャンネル",
+		"ディズニーｃｈ",
 		"Ｊ　ＳＰＯＲＴＳ　１",
 		"Ｊ　ＳＰＯＲＴＳ　２",
 		"Ｊ　ＳＰＯＲＴＳ　３",

@@ -104,7 +104,7 @@ public class SuntvHtmlParser {
 //			deletePS.close();
 
 			// 删除旧数据
-			conn.createStatement().execute(GlobalSetting.deleteOldProgram);
+//			conn.createStatement().execute(GlobalSetting.deleteOldProgram);
 		} catch (Exception e) {
 			e.printStackTrace(System.out);
 		} finally {
